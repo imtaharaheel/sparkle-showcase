@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Filter, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
@@ -60,7 +60,7 @@ const Products = () => {
       
       <main className="pt-20 md:pt-24">
         {/* Header */}
-        <section className="border-b border-border bg-card/50 py-12 md:py-16">
+        <section className="border-b border-border bg-gradient-to-b from-secondary/50 to-background py-12 md:py-16">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -68,7 +68,7 @@ const Products = () => {
               transition={{ duration: 0.5 }}
               className="text-center"
             >
-              <h1 className="mb-4 font-display text-3xl font-bold md:text-4xl lg:text-5xl">
+              <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
                 {selectedCategory === "all" 
                   ? "All Products" 
                   : categories.find(c => c.id === selectedCategory)?.name || "Products"
@@ -103,7 +103,7 @@ const Products = () => {
                   variant={selectedCategory === "all" ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleCategoryChange("all")}
-                  className={selectedCategory === "all" ? "gradient-cyber text-primary-foreground" : ""}
+                  className={selectedCategory === "all" ? "gradient-brand text-primary-foreground" : ""}
                 >
                   All
                 </Button>
@@ -113,7 +113,7 @@ const Products = () => {
                     variant={selectedCategory === category.id ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleCategoryChange(category.id)}
-                    className={selectedCategory === category.id ? "gradient-cyber text-primary-foreground" : ""}
+                    className={selectedCategory === category.id ? "gradient-brand text-primary-foreground" : ""}
                   >
                     {category.icon} {category.name}
                   </Button>
@@ -181,7 +181,7 @@ const Products = () => {
                 animate={{ opacity: 1 }}
                 className="py-20 text-center"
               >
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
                   <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="mb-2 font-display text-xl font-semibold">No products found</h3>

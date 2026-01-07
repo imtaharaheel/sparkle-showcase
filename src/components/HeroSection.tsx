@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Zap, Shield, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedBackground } from "./AnimatedBackground";
 
 const features = [
   { icon: Zap, label: "High Performance" },
@@ -12,21 +13,7 @@ const features = [
 export const HeroSection = () => {
   return (
     <section className="relative min-h-screen overflow-hidden pt-20">
-      {/* Background Effects */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-secondary/20" />
-        <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-        {/* Grid Pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
-                              linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
-          }}
-        />
-      </div>
+      <AnimatedBackground variant="hero" />
 
       <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32">
         <div className="flex flex-col items-center text-center">
@@ -51,10 +38,10 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-6 max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl xl:text-7xl"
+            className="mb-6 max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight text-foreground md:text-5xl lg:text-6xl xl:text-7xl"
           >
             Elevate Your{" "}
-            <span className="gradient-cyber-text">Gaming</span>
+            <span className="gradient-brand-text">Gaming</span>
             <br />
             Experience
           </motion.h1>
@@ -77,7 +64,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mb-12 flex flex-col gap-4 sm:flex-row"
           >
-            <Button asChild size="lg" className="gradient-cyber text-primary-foreground font-semibold px-8 glow-primary">
+            <Button asChild size="lg" className="gradient-brand text-primary-foreground font-semibold px-8 glow-primary">
               <Link to="/products">
                 Browse Products
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -119,21 +106,21 @@ export const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="relative mt-16 md:mt-24"
         >
-          <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-border bg-card/50 p-4 md:p-8">
+          <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-4 md:p-8 shadow-xl">
             <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
             
             {/* Mock Product Display */}
-            <div className="relative flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br from-muted to-secondary">
+            <div className="relative flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-accent/30">
               <motion.div
                 className="text-center"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                <span className="font-display text-6xl font-bold gradient-cyber-text md:text-8xl">
-                  MEETION
+                <span className="font-display text-5xl font-bold gradient-brand-text md:text-7xl">
+                  SAIM
                 </span>
-                <p className="mt-2 text-lg text-muted-foreground">Premium Gaming Gear</p>
+                <p className="mt-2 text-lg text-muted-foreground">Enterprise • Premium Gaming Gear</p>
               </motion.div>
             </div>
           </div>

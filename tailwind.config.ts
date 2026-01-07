@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Orbitron', 'sans-serif'],
+        display: ['Poppins', 'sans-serif'],
         sans: ['Inter', 'sans-serif'],
       },
       colors: {
@@ -61,10 +61,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        cyber: {
-          cyan: "hsl(185 100% 50%)",
-          purple: "hsl(280 100% 60%)",
-          dark: "hsl(220 20% 4%)",
+        brand: {
+          maroon: "hsl(348 83% 40%)",
+          rose: "hsl(348 83% 55%)",
+          pink: "hsl(348 60% 70%)",
+          blush: "hsl(348 40% 90%)",
         },
       },
       borderRadius: {
