@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 import { featuredProducts } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
+import { AnimatedBackground } from "./AnimatedBackground";
 
 export const FeaturedProducts = () => {
   return (
     <section className="relative py-20 md:py-32">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-secondary/10 to-background" />
+      <AnimatedBackground variant="featured" />
 
       <div className="container mx-auto px-4">
         {/* Header */}
@@ -23,8 +23,8 @@ export const FeaturedProducts = () => {
           <span className="mb-3 inline-block text-sm font-medium uppercase tracking-wider text-primary">
             Top Picks
           </span>
-          <h2 className="mb-4 font-display text-3xl font-bold md:text-4xl lg:text-5xl">
-            Featured <span className="gradient-cyber-text">Products</span>
+          <h2 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+            Featured <span className="gradient-brand-text">Products</span>
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
             Discover our most popular gaming peripherals, trusted by gamers worldwide

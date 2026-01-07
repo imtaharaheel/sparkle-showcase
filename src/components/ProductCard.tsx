@@ -27,20 +27,20 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     >
       <Link to={`/product/${product.id}`}>
         <motion.article
-          className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
+          className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
           whileHover={{ y: -5 }}
         >
           {/* Badge */}
           {product.badge && (
             <div className="absolute top-3 left-3 z-10">
-              <Badge className="gradient-cyber text-primary-foreground font-semibold">
+              <Badge className="gradient-brand text-primary-foreground font-semibold">
                 {product.badge}
               </Badge>
             </div>
           )}
 
           {/* Image Container */}
-          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-muted p-6">
+          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-accent/20 p-6">
             <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <motion.div
               className="flex h-full w-full items-center justify-center"
@@ -48,8 +48,8 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               transition={{ duration: 0.3 }}
             >
               {/* Placeholder for product image */}
-              <div className="flex h-full w-full items-center justify-center rounded-lg bg-muted/50">
-                <span className="text-4xl font-display font-bold text-muted-foreground/30">
+              <div className="flex h-full w-full items-center justify-center rounded-lg">
+                <span className="text-3xl font-display font-bold text-primary/20">
                   {product.model}
                 </span>
               </div>

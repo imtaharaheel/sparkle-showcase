@@ -51,7 +51,7 @@ const ProductDetail = () => {
       
       <main className="pt-20 md:pt-24">
         {/* Breadcrumb */}
-        <section className="border-b border-border bg-card/50">
+        <section className="border-b border-border bg-secondary/30">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center gap-2 text-sm text-muted-foreground">
               <Link to="/" className="transition-colors hover:text-foreground">Home</Link>
@@ -85,11 +85,11 @@ const ProductDetail = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
-                  className="sticky top-28 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-muted"
+                  className="sticky top-28 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-accent/20 shadow-lg"
                 >
                   {product.badge && (
                     <div className="absolute top-4 left-4 z-10">
-                      <Badge className="gradient-cyber text-primary-foreground font-semibold text-sm px-3 py-1">
+                      <Badge className="gradient-brand text-primary-foreground font-semibold text-sm px-3 py-1">
                         {product.badge}
                       </Badge>
                     </div>
@@ -100,7 +100,7 @@ const ProductDetail = () => {
                       animate={{ y: [0, -5, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      <span className="font-display text-5xl font-bold text-muted-foreground/30 md:text-6xl">
+                      <span className="font-display text-5xl font-bold text-primary/30 md:text-6xl">
                         {product.model}
                       </span>
                     </motion.div>
@@ -129,7 +129,7 @@ const ProductDetail = () => {
                   </p>
 
                   {/* Name */}
-                  <h1 className="mb-4 font-display text-3xl font-bold md:text-4xl">
+                  <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">
                     {product.name}
                   </h1>
 
@@ -178,7 +178,7 @@ const ProductDetail = () => {
 
                   {/* Features */}
                   <div>
-                    <h3 className="mb-4 font-display text-lg font-semibold">Features & Specifications</h3>
+                    <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Features & Specifications</h3>
                     <ul className="grid gap-3 sm:grid-cols-2">
                       {product.features.map((feature, index) => (
                         <motion.li
@@ -202,7 +202,7 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <section className="border-t border-border bg-card/50 py-16 md:py-20">
+          <section className="border-t border-border bg-secondary/20 py-16 md:py-20">
             <div className="container mx-auto px-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -210,7 +210,7 @@ const ProductDetail = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
               >
-                <h2 className="mb-8 font-display text-2xl font-bold md:text-3xl">
+                <h2 className="mb-8 font-display text-2xl font-bold text-foreground md:text-3xl">
                   Related Products
                 </h2>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

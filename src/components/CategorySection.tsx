@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Keyboard, Mouse, Headphones, Package, Speaker, Mic } from "lucide-react";
+import { AnimatedBackground } from "./AnimatedBackground";
 
 const categories = [
   { 
@@ -9,7 +10,6 @@ const categories = [
     icon: Keyboard, 
     description: "Mechanical & Gaming",
     count: 12,
-    gradient: "from-cyan-500/20 to-blue-500/20"
   },
   { 
     id: "mouse", 
@@ -17,7 +17,6 @@ const categories = [
     icon: Mouse, 
     description: "Precision & Speed",
     count: 15,
-    gradient: "from-purple-500/20 to-pink-500/20"
   },
   { 
     id: "headset", 
@@ -25,7 +24,6 @@ const categories = [
     icon: Headphones, 
     description: "Immersive Audio",
     count: 8,
-    gradient: "from-green-500/20 to-teal-500/20"
   },
   { 
     id: "combo", 
@@ -33,7 +31,6 @@ const categories = [
     icon: Package, 
     description: "Complete Setups",
     count: 6,
-    gradient: "from-orange-500/20 to-red-500/20"
   },
   { 
     id: "speaker", 
@@ -41,7 +38,6 @@ const categories = [
     icon: Speaker, 
     description: "Desktop Audio",
     count: 3,
-    gradient: "from-yellow-500/20 to-orange-500/20"
   },
   { 
     id: "microphone", 
@@ -49,13 +45,14 @@ const categories = [
     icon: Mic, 
     description: "Streaming & Gaming",
     count: 2,
-    gradient: "from-indigo-500/20 to-purple-500/20"
   },
 ];
 
 export const CategorySection = () => {
   return (
-    <section className="py-20 md:py-32">
+    <section className="relative py-20 md:py-32">
+      <AnimatedBackground variant="categories" />
+
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
@@ -68,8 +65,8 @@ export const CategorySection = () => {
           <span className="mb-3 inline-block text-sm font-medium uppercase tracking-wider text-primary">
             Browse By Category
           </span>
-          <h2 className="mb-4 font-display text-3xl font-bold md:text-4xl lg:text-5xl">
-            Find Your Perfect <span className="gradient-cyber-text">Gear</span>
+          <h2 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+            Find Your Perfect <span className="gradient-brand-text">Gear</span>
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
             Explore our wide range of gaming peripherals organized by category
@@ -88,11 +85,16 @@ export const CategorySection = () => {
             >
               <Link to={`/products?category=${category.id}`}>
                 <motion.div
-                  className={`group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br ${category.gradient} p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10`}
+                  className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
                   whileHover={{ y: -5, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="flex items-start justify-between">
+                  {/* Animated gradient overlay on hover */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 transition-opacity group-hover:opacity-100"
+                  />
+                  
+                  <div className="relative flex items-start justify-between">
                     <div>
                       <motion.div
                         className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary"
