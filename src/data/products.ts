@@ -12,6 +12,9 @@ export interface Product {
   badge?: string;
 }
 
+// Round price to nearest 100
+const roundPrice = (price: number): number => Math.round(price / 100) * 100;
+
 export const products: Product[] = [
   // Mechanical Keyboards
   {
@@ -19,7 +22,7 @@ export const products: Product[] = [
     model: "MK14 BLACK",
     name: "MK14 Tri-Mode Mechanical Keyboard",
     category: "keyboard",
-    price: 11213,
+    price: roundPrice(9750),
     description: "Premium tri-mode mechanical keyboard with hot-swappable switches and RGB backlit.",
     features: [
       "Wired + 2.4G + Bluetooth Tri-Mode",
@@ -33,7 +36,7 @@ export const products: Product[] = [
       "87% Layout, TKL Design",
       "4000mAh Battery"
     ],
-    image: "/products/mk14.png",
+    image: "/products/product-1.png",
     webLink: "www.meetion.com/MT-MK14.html",
     featured: true,
     badge: "Best Seller"

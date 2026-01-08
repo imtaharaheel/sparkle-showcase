@@ -4,6 +4,7 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Product, formatPrice } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -11,11 +12,21 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const message = `Hi! I'm interested in ${product.name} (${product.model}) - ${formatPrice(product.price)}`;
     window.open(`https://wa.me/9233442914563?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left - rect.width / 2) / 20;
+    const y = (e.clientY - rect.top - rect.height / 2) / 20;
+    setMousePos({ x, y });
   };
 
   return (
@@ -24,11 +35,29 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
+      style={{ perspective: 1000 }}
     >
       <Link to={`/product/${product.id}`}>
         <motion.article
-          className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
-          whileHover={{ y: -5 }}
+          className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300"
+          onMouseMove={handleMouseMove}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            setMousePos({ x: 0, y: 0 });
+          }}
+          animate={{
+            rotateX: isHovered ? -mousePos.y : 0,
+            rotateY: isHovered ? mousePos.x : 0,
+            scale: isHovered ? 1.02 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          style={{
+            transformStyle: "preserve-3d",
+            boxShadow: isHovered 
+              ? `${mousePos.x * 2}px ${mousePos.y * 2}px 30px hsl(var(--primary) / 0.15)` 
+              : undefined,
+          }}
         >
           {/* Badge */}
           {product.badge && (
@@ -40,24 +69,30 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           )}
 
           {/* Image Container */}
-          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-accent/20 p-6">
+          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-accent/20 p-4">
             <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <motion.div
               className="flex h-full w-full items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
+              style={{ transform: "translateZ(30px)" }}
             >
-              {/* Placeholder for product image */}
-              <div className="flex h-full w-full items-center justify-center rounded-lg">
-                <span className="text-3xl font-display font-bold text-primary/20">
-                  {product.model}
-                </span>
-              </div>
+              {product.image && product.image !== `/products/${product.id}.png` ? (
+                <img 
+                  src={product.image} 
+                  alt={product.name}
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-lg">
+                  <span className="text-3xl font-display font-bold text-primary/20">
+                    {product.model}
+                  </span>
+                </div>
+              )}
             </motion.div>
           </div>
 
           {/* Content */}
-          <div className="flex flex-1 flex-col p-5">
+          <div className="flex flex-1 flex-col p-5" style={{ transform: "translateZ(20px)" }}>
             <div className="mb-2 flex items-start justify-between gap-2">
               <span className="text-xs font-medium uppercase tracking-wider text-primary">
                 {product.model}

@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Keyboard, Mouse, Headphones, Package } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/products", label: "All Products" },
-  { href: "/products?category=keyboard", label: "Keyboards", icon: Keyboard },
-  { href: "/products?category=mouse", label: "Mice", icon: Mouse },
-  { href: "/products?category=headset", label: "Headsets", icon: Headphones },
-  { href: "/products?category=combo", label: "Combos", icon: Package },
+  { href: "/products", label: "Products" },
+  { href: "/about", label: "About Us" },
 ];
 
 export const Navbar = () => {
@@ -90,7 +87,6 @@ export const Navbar = () => {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
-                      {link.icon && <link.icon className="h-4 w-4" />}
                       {link.label}
                     </Link>
                   </motion.div>
