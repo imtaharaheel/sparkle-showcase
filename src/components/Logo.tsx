@@ -7,59 +7,75 @@ interface LogoProps {
 
 export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
-    sm: { icon: "h-8 w-8", text: "text-lg" },
-    md: { icon: "h-10 w-10", text: "text-xl" },
-    lg: { icon: "h-14 w-14", text: "text-2xl" },
+    sm: { icon: "h-8 w-8", text: "text-lg", subtext: "text-[8px]" },
+    md: { icon: "h-10 w-10", text: "text-xl", subtext: "text-[10px]" },
+    lg: { icon: "h-14 w-14", text: "text-2xl", subtext: "text-xs" },
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <motion.div
         className={`relative ${sizes[size].icon} flex items-center justify-center`}
         whileHover={{ scale: 1.05, rotate: 5 }}
         whileTap={{ scale: 0.95 }}
       >
-        {/* Logo SVG - Stylized "S" with tech elements */}
+        {/* Modern Logo SVG - Abstract "S" with geometric shapes */}
         <svg
           viewBox="0 0 48 48"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="h-full w-full"
+          className="h-full w-full drop-shadow-md"
         >
-          {/* Background Circle with Gradient */}
+          {/* Gradient Definitions */}
           <defs>
-            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(348, 83%, 47%)" />
+            <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(348, 83%, 50%)" />
+              <stop offset="50%" stopColor="hsl(348, 83%, 40%)" />
               <stop offset="100%" stopColor="hsl(348, 83%, 30%)" />
             </linearGradient>
-            <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="white" stopOpacity="0.3" />
-              <stop offset="50%" stopColor="white" stopOpacity="0" />
+            <linearGradient id="innerGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
             </linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="hsl(348, 83%, 30%)" floodOpacity="0.3"/>
+            </filter>
           </defs>
           
-          {/* Main circle */}
-          <circle cx="24" cy="24" r="22" fill="url(#logoGradient)" />
+          {/* Outer rounded square */}
+          <rect 
+            x="4" y="4" 
+            width="40" height="40" 
+            rx="12" 
+            fill="url(#brandGradient)" 
+            filter="url(#shadow)"
+          />
           
-          {/* Shine effect */}
-          <circle cx="24" cy="24" r="22" fill="url(#shineGradient)" />
+          {/* Inner glow */}
+          <rect 
+            x="4" y="4" 
+            width="40" height="40" 
+            rx="12" 
+            fill="url(#innerGlow)"
+          />
           
-          {/* Stylized "S" letter */}
+          {/* Stylized "SE" monogram */}
           <path
-            d="M30 16C30 16 27 13 22 13C17 13 14 16 14 19C14 22 16 24 20 25L28 27C32 28 34 31 34 34C34 37 31 40 25 40C19 40 16 37 16 37"
+            d="M17 16C17 16 20 14 24 14C28 14 31 16 31 19C31 22 28 24 24 24C20 24 17 26 17 29C17 32 20 34 24 34C28 34 31 32 31 32"
             stroke="white"
-            strokeWidth="3.5"
+            strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
           
-          {/* Tech accent dots */}
-          <circle cx="10" cy="24" r="2" fill="white" fillOpacity="0.6" />
-          <circle cx="38" cy="24" r="2" fill="white" fillOpacity="0.6" />
+          {/* Accent lines */}
+          <line x1="33" y1="14" x2="33" y2="22" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
+          <line x1="33" y1="20" x2="38" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
           
-          {/* Inner ring */}
-          <circle cx="24" cy="24" r="18" stroke="white" strokeOpacity="0.2" strokeWidth="1" fill="none" />
+          {/* Decorative dots */}
+          <circle cx="11" cy="24" r="1.5" fill="white" fillOpacity="0.6" />
+          <circle cx="37" cy="28" r="1.5" fill="white" fillOpacity="0.6" />
         </svg>
       </motion.div>
       
@@ -68,7 +84,7 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
           <span className={`font-display ${sizes[size].text} font-bold tracking-tight`}>
             <span className="gradient-brand-text">SAIM</span>
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.15em] text-muted-foreground`}>
             Enterprise
           </span>
         </div>

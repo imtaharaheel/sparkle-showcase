@@ -1,76 +1,13 @@
 import { motion } from "framer-motion";
+import { ParticleBackground } from "./ParticleBackground";
 
 interface AnimatedBackgroundProps {
-  variant?: "hero" | "featured" | "categories" | "gradient";
+  variant?: "hero" | "featured" | "categories" | "gradient" | "particles";
 }
 
 export const AnimatedBackground = ({ variant = "hero" }: AnimatedBackgroundProps) => {
-  if (variant === "hero") {
-    return (
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-accent/30" />
-        
-        {/* Animated blobs */}
-        <motion.div
-          className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
-          animate={{
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/2 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl"
-          animate={{
-            x: [0, 20, 0],
-            y: [0, 30, 0],
-            scale: [1, 0.9, 1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-accent/20 blur-3xl"
-          animate={{
-            x: [0, -25, 0],
-            y: [0, -15, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-        
-        {/* Floating particles */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-2 w-2 rounded-full bg-primary/20"
-            style={{
-              left: `${15 + i * 15}%`,
-              top: `${20 + (i % 3) * 25}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 4 + i,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.5,
-            }}
-          />
-        ))}
-        
-        {/* Grid pattern overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `radial-gradient(hsl(var(--primary)) 1px, transparent 1px)`,
-            backgroundSize: '30px 30px',
-          }}
-        />
-      </div>
-    );
+  if (variant === "hero" || variant === "particles") {
+    return <ParticleBackground particleCount={60} interactive={true} />;
   }
 
   if (variant === "featured") {
@@ -83,7 +20,7 @@ export const AnimatedBackground = ({ variant = "hero" }: AnimatedBackgroundProps
         <motion.div
           className="absolute -bottom-20 left-0 right-0 h-40"
           style={{
-            background: "linear-gradient(180deg, transparent 0%, hsl(var(--primary) / 0.03) 100%)",
+            background: "linear-gradient(180deg, transparent 0%, hsl(var(--primary) / 0.05) 100%)",
             borderRadius: "100% 100% 0 0",
           }}
           animate={{ y: [0, -10, 0] }}
@@ -106,6 +43,28 @@ export const AnimatedBackground = ({ variant = "hero" }: AnimatedBackgroundProps
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         />
+        
+        {/* Floating particles */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute h-2 w-2 rounded-full bg-primary/20"
+            style={{
+              left: `${10 + i * 12}%`,
+              top: `${20 + (i % 4) * 20}%`,
+            }}
+            animate={{
+              y: [0, -40, 0],
+              opacity: [0.2, 0.6, 0.2],
+            }}
+            transition={{
+              duration: 4 + i * 0.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.3,
+            }}
+          />
+        ))}
       </div>
     );
   }
@@ -146,6 +105,16 @@ export const AnimatedBackground = ({ variant = "hero" }: AnimatedBackgroundProps
             }}
           />
         ))}
+        
+        {/* Animated orbs */}
+        <motion.div
+          className="absolute -top-20 right-[20%] h-96 w-96 rounded-full bg-primary/5 blur-3xl"
+          animate={{
+            y: [0, 30, 0],
+            x: [0, -20, 0],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
       </div>
     );
   }
