@@ -7,75 +7,89 @@ interface LogoProps {
 
 export const Logo = ({ size = "md", showText = true }: LogoProps) => {
   const sizes = {
-    sm: { icon: "h-8 w-8", text: "text-lg", subtext: "text-[8px]" },
-    md: { icon: "h-10 w-10", text: "text-xl", subtext: "text-[10px]" },
-    lg: { icon: "h-14 w-14", text: "text-2xl", subtext: "text-xs" },
+    sm: { icon: "h-9 w-9", text: "text-lg", subtext: "text-[8px]" },
+    md: { icon: "h-11 w-11", text: "text-xl", subtext: "text-[10px]" },
+    lg: { icon: "h-16 w-16", text: "text-2xl", subtext: "text-xs" },
   };
 
   return (
     <div className="flex items-center gap-3">
       <motion.div
         className={`relative ${sizes[size].icon} flex items-center justify-center`}
-        whileHover={{ scale: 1.05, rotate: 5 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        {/* Modern Logo SVG - Abstract "S" with geometric shapes */}
+        {/* Modern Logo SVG - Abstract "S" with geometric flow */}
         <svg
-          viewBox="0 0 48 48"
+          viewBox="0 0 56 56"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="h-full w-full drop-shadow-md"
+          className="h-full w-full"
         >
           {/* Gradient Definitions */}
           <defs>
-            <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(348, 83%, 50%)" />
-              <stop offset="50%" stopColor="hsl(348, 83%, 40%)" />
-              <stop offset="100%" stopColor="hsl(348, 83%, 30%)" />
+            <linearGradient id="logoGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#be185d" />
+              <stop offset="50%" stopColor="#9f1239" />
+              <stop offset="100%" stopColor="#881337" />
             </linearGradient>
-            <linearGradient id="innerGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+            <linearGradient id="logoGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#f43f5e" />
+              <stop offset="100%" stopColor="#be185d" />
+            </linearGradient>
+            <linearGradient id="logoShine" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+              <stop offset="50%" stopColor="white" stopOpacity="0.1" />
               <stop offset="100%" stopColor="white" stopOpacity="0" />
             </linearGradient>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="hsl(348, 83%, 30%)" floodOpacity="0.3"/>
+            <filter id="logoShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#9f1239" floodOpacity="0.4"/>
             </filter>
           </defs>
           
-          {/* Outer rounded square */}
-          <rect 
-            x="4" y="4" 
-            width="40" height="40" 
-            rx="12" 
-            fill="url(#brandGradient)" 
-            filter="url(#shadow)"
+          {/* Background circle with gradient */}
+          <circle 
+            cx="28" 
+            cy="28" 
+            r="26" 
+            fill="url(#logoGradient1)" 
+            filter="url(#logoShadow)"
           />
           
-          {/* Inner glow */}
-          <rect 
-            x="4" y="4" 
-            width="40" height="40" 
-            rx="12" 
-            fill="url(#innerGlow)"
+          {/* Inner ring */}
+          <circle 
+            cx="28" 
+            cy="28" 
+            r="22" 
+            fill="none"
+            stroke="url(#logoGradient2)"
+            strokeWidth="1.5"
+            opacity="0.5"
           />
           
-          {/* Stylized "SE" monogram */}
+          {/* Stylized "S" - flowing design */}
           <path
-            d="M17 16C17 16 20 14 24 14C28 14 31 16 31 19C31 22 28 24 24 24C20 24 17 26 17 29C17 32 20 34 24 34C28 34 31 32 31 32"
+            d="M36 18C36 18 32 14 26 14C20 14 16 18 16 22C16 26 20 28 26 29C32 30 38 32 38 38C38 44 32 48 26 48C20 48 16 44 16 44"
             stroke="white"
-            strokeWidth="3"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
           
-          {/* Accent lines */}
-          <line x1="33" y1="14" x2="33" y2="22" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
-          <line x1="33" y1="20" x2="38" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.9"/>
+          {/* Accent dot top */}
+          <circle cx="38" cy="16" r="3" fill="white" opacity="0.9" />
           
-          {/* Decorative dots */}
-          <circle cx="11" cy="24" r="1.5" fill="white" fillOpacity="0.6" />
-          <circle cx="37" cy="28" r="1.5" fill="white" fillOpacity="0.6" />
+          {/* Accent dot bottom */}
+          <circle cx="14" cy="46" r="2.5" fill="white" opacity="0.7" />
+          
+          {/* Shine overlay */}
+          <circle 
+            cx="28" 
+            cy="28" 
+            r="26" 
+            fill="url(#logoShine)"
+          />
         </svg>
       </motion.div>
       
@@ -84,7 +98,7 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
           <span className={`font-display ${sizes[size].text} font-bold tracking-tight`}>
             <span className="gradient-brand-text">SAIM</span>
           </span>
-          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.15em] text-muted-foreground`}>
+          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.2em] text-muted-foreground`}>
             Enterprise
           </span>
         </div>
