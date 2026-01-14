@@ -118,7 +118,7 @@ export const HeroSection = () => {
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
                 <span className="font-display text-5xl font-bold gradient-brand-text md:text-7xl">
-                  SAIM SAU
+                  SAIM SAUDAFGAR
                 </span>
                 <p className="mt-2 text-lg text-muted-foreground">Enterprise • Premium Gaming Gear</p>
               </motion.div>
