@@ -1,8 +1,17 @@
+export interface ProductVariant {
+  color: string;
+  colorCode: string; // Hex code for color display
+  storage?: string;
+  price: number;
+  image: string;
+  inStock: boolean;
+}
+
 export interface Product {
   id: string;
   model: string;
   name: string;
-  category: 'keyboard' | 'mouse' | 'headset' | 'combo' | 'speaker' | 'microphone' | 'accessory';
+  category: 'keyboard' | 'mouse' | 'headset' | 'combo' | 'speaker' | 'microphone' | 'accessory' | 'ipad' | 'apple-pencil' | 'ipad-accessories' | 'mac' | 'laptop';
   price: number;
   description: string;
   features: string[];
@@ -10,6 +19,10 @@ export interface Product {
   webLink?: string;
   featured?: boolean;
   badge?: string;
+  // New fields for Apple products
+  variants?: ProductVariant[];
+  storageOptions?: string[];
+  colorOptions?: { name: string; code: string }[];
 }
 
 // Round price to nearest 100
@@ -714,6 +727,11 @@ export const categories = [
   { id: 'combo', name: 'Gaming Combos', icon: '🎮' },
   { id: 'speaker', name: 'Speakers', icon: '🔊' },
   { id: 'microphone', name: 'Microphones', icon: '🎤' },
+  { id: 'ipad', name: 'iPads', icon: '📱' },
+  { id: 'apple-pencil', name: 'Apple Pencil', icon: '✏️' },
+  { id: 'ipad-accessories', name: 'iPad Accessories', icon: '🔌' },
+  { id: 'mac', name: 'Mac', icon: '🖥️' },
+  { id: 'laptop', name: 'Laptops', icon: '💻' },
 ] as const;
 
 export const featuredProducts = products.filter(p => p.featured);
