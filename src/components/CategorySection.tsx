@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Keyboard, Mouse, Headphones, Package, Speaker, Mic } from "lucide-react";
+import { Keyboard, Mouse, Headphones, Package, Speaker, Mic, Tablet, Pencil, Laptop, Monitor, Cable, Smartphone } from "lucide-react";
 import { AnimatedBackground } from "./AnimatedBackground";
 
 const categories = [
@@ -45,6 +45,41 @@ const categories = [
     icon: Mic, 
     description: "Streaming & Gaming",
     count: 2,
+  },
+  { 
+    id: "ipad", 
+    name: "iPads", 
+    icon: Tablet, 
+    description: "Apple Tablets",
+    count: 5,
+  },
+  { 
+    id: "apple-pencil", 
+    name: "Apple Pencil", 
+    icon: Pencil, 
+    description: "Stylus & Drawing",
+    count: 3,
+  },
+  { 
+    id: "ipad-accessories", 
+    name: "iPad Accessories", 
+    icon: Cable, 
+    description: "Cases & Keyboards",
+    count: 8,
+  },
+  { 
+    id: "mac", 
+    name: "Mac", 
+    icon: Monitor, 
+    description: "Desktop Computers",
+    count: 4,
+  },
+  { 
+    id: "laptop", 
+    name: "Laptops", 
+    icon: Laptop, 
+    description: "MacBooks & More",
+    count: 6,
   },
 ];
 
