@@ -16,7 +16,7 @@ export interface Product {
 const roundPrice = (price: number): number => Math.round(price / 100) * 100;
 
 export const products: Product[] = [
-  // Mechanical Keyboards
+  // Mechanical Keyboards - Page 1 images
   {
     id: "mk14-black",
     model: "MK14 BLACK",
@@ -36,7 +36,7 @@ export const products: Product[] = [
       "87% Layout, TKL Design",
       "4000mAh Battery"
     ],
-    image: "/products/product-1.png",
+    image: "/products/product-p1-1.png",
     webLink: "www.meetion.com/MT-MK14.html",
     featured: true,
     badge: "Best Seller"
@@ -46,7 +46,7 @@ export const products: Product[] = [
     model: "MK14 WHITE",
     name: "MK14 Tri-Mode Mechanical Keyboard",
     category: "keyboard",
-    price: 11213,
+    price: roundPrice(11213),
     description: "Premium tri-mode mechanical keyboard in elegant white finish.",
     features: [
       "Wired + 2.4G + Bluetooth Tri-Mode",
@@ -55,7 +55,7 @@ export const products: Product[] = [
       "Hot-Swappable Switches",
       "RGB Backlit"
     ],
-    image: "/products/mk14-white.png",
+    image: "/products/product-p1-2.png",
     webLink: "www.meetion.com/MT-MK14.html"
   },
   {
@@ -63,7 +63,7 @@ export const products: Product[] = [
     model: "MK12 WHITE",
     name: "MK12 65% Mechanical Keyboard",
     category: "keyboard",
-    price: 10005,
+    price: roundPrice(10005),
     description: "Compact 65% layout mechanical keyboard with premium features.",
     features: [
       "ABS Plastic Construction",
@@ -77,7 +77,7 @@ export const products: Product[] = [
       "65% Layout",
       "2000mAh Battery"
     ],
-    image: "/products/mk12.png",
+    image: "/products/product-p1-3.png",
     webLink: "www.meetion.com/MT-MK12.html",
     featured: true,
     badge: "Compact"
@@ -87,7 +87,7 @@ export const products: Product[] = [
     model: "MK12 BLACK",
     name: "MK12 65% Mechanical Keyboard",
     category: "keyboard",
-    price: 10005,
+    price: roundPrice(10005),
     description: "Compact 65% layout mechanical keyboard in sleek black.",
     features: [
       "65% Layout",
@@ -95,7 +95,7 @@ export const products: Product[] = [
       "Hot-Swappable Switches",
       "RGB Backlight"
     ],
-    image: "/products/mk12-black.png",
+    image: "/products/product-p1-4.png",
     webLink: "www.meetion.com/MT-MK12.html"
   },
   {
@@ -103,7 +103,7 @@ export const products: Product[] = [
     model: "MK009 Pro",
     name: "MK009 Pro Gaming Keyboard",
     category: "keyboard",
-    price: 7843,
+    price: roundPrice(7843),
     description: "Professional gaming keyboard with hot-swappable red switches.",
     features: [
       "Red Switches Hot-Swappable",
@@ -112,7 +112,7 @@ export const products: Product[] = [
       "Software Customizable Settings",
       "Detachable Wired Connection"
     ],
-    image: "/products/mk009-pro.png",
+    image: "/products/product-p1-5.png",
     webLink: "www.meetion.com/mt-MK009PRD-HOTSWAP.html",
     featured: true,
     badge: "Pro Gaming"
@@ -122,7 +122,7 @@ export const products: Product[] = [
     model: "MK009RD",
     name: "MK009 Mechanical Keyboard",
     category: "keyboard",
-    price: 5348,
+    price: roundPrice(5348),
     description: "Hot-swappable mechanical keyboard with rainbow backlighting.",
     features: [
       "Red Switches Hot-Swappable",
@@ -130,7 +130,7 @@ export const products: Product[] = [
       "Detachable USB-TypeC",
       "Color Box Packaging"
     ],
-    image: "/products/mk009.png",
+    image: "/products/product-p1-6.png",
     webLink: "www.meetion.com/mt-mk009.html"
   },
   {
@@ -138,7 +138,7 @@ export const products: Product[] = [
     model: "MK008 PRO",
     name: "MK008 Pro 80% Gaming Keyboard",
     category: "keyboard",
-    price: 6153,
+    price: roundPrice(6153),
     description: "80% hot sale gaming mechanical keyboard with metal top cover.",
     features: [
       "Metal Top Cover with Knob",
@@ -149,7 +149,7 @@ export const products: Product[] = [
       "Software Customizable Settings",
       "Detachable USB-TypeC"
     ],
-    image: "/products/mk008-pro.png",
+    image: "/products/product-p1-7.png",
     webLink: "www.meetion.com/MT-MK008Pro.html"
   },
   {
@@ -157,7 +157,7 @@ export const products: Product[] = [
     model: "MK006 PRO",
     name: "MK006 Pro 75% Gaming Keyboard",
     category: "keyboard",
-    price: 5727,
+    price: roundPrice(5727),
     description: "75% gaming mechanical keyboard with metal top cover and knob.",
     features: [
       "Metal Top Cover with Knob",
@@ -167,7 +167,7 @@ export const products: Product[] = [
       "Software Customizable Settings",
       "Detachable USB-TypeC"
     ],
-    image: "/products/mk006-pro.png",
+    image: "/products/product-p1-8.png",
     webLink: "www.meetion.com/MT-MK006Pro.html"
   },
   {
@@ -175,7 +175,7 @@ export const products: Product[] = [
     model: "MK005 BLACK",
     name: "MK005 60% Mechanical Keyboard",
     category: "keyboard",
-    price: 5520,
+    price: roundPrice(5520),
     description: "Compact 60% mechanical keyboard with OUTEMU Blue switches.",
     features: [
       "USB Wired",
@@ -185,7 +185,7 @@ export const products: Product[] = [
       "Monochromatic Mixed Light",
       "TypeC-USB Cable: 1.8m"
     ],
-    image: "/products/mk005.png",
+    image: "/products/product-p1-9.png",
     webLink: "www.meetion.com/mt-mk005.html"
   },
   {
@@ -193,7 +193,7 @@ export const products: Product[] = [
     model: "MK005BT",
     name: "MK005 Bluetooth Mechanical Keyboard",
     category: "keyboard",
-    price: 8280,
+    price: roundPrice(8280),
     description: "Wireless Bluetooth mechanical keyboard with 60% layout.",
     features: [
       "TypeC-USB Bluetooth",
@@ -201,7 +201,7 @@ export const products: Product[] = [
       "Monochromatic Mixed Light",
       "TypeC-USB Cable: 1.8m"
     ],
-    image: "/products/mk005bt.png",
+    image: "/products/product-p1-10.png",
     webLink: "www.meetion.com/mt-mk005bt.html"
   },
   {
@@ -209,7 +209,7 @@ export const products: Product[] = [
     model: "K9320",
     name: "K9320 Rainbow Gaming Keyboard",
     category: "keyboard",
-    price: 2168,
+    price: roundPrice(2168),
     description: "Affordable membrane keyboard with rainbow backlight.",
     features: [
       "USB Wired",
@@ -217,17 +217,17 @@ export const products: Product[] = [
       "Rainbow Backlight",
       "30 Million Keystrokes"
     ],
-    image: "/products/k9320.png",
+    image: "/products/product-p1-11.png",
     webLink: "www.meetion.com/mt-K9320.html"
   },
   
-  // Gaming Mice
+  // Gaming Mice - Page 2 images
   {
     id: "gm23-2023",
     model: "GM23",
     name: "GM23 RGB Gaming Mouse",
     category: "mouse",
-    price: 3680,
+    price: roundPrice(3680),
     description: "High-performance gaming mouse with adjustable weight.",
     features: [
       "ABS Plastic, 128×81×40mm",
@@ -239,7 +239,7 @@ export const products: Product[] = [
       "Software Support",
       "Adjustable Weight"
     ],
-    image: "/products/gm23.png",
+    image: "/products/product-p2-1.png",
     webLink: "www.meetion.com/mt-gm23_2023.html",
     featured: true,
     badge: "High DPI"
@@ -249,7 +249,7 @@ export const products: Product[] = [
     model: "GM21",
     name: "GM21 RGB Gaming Mouse",
     category: "mouse",
-    price: 3048,
+    price: roundPrice(3048),
     description: "Precision gaming mouse with RGB lighting.",
     features: [
       "ABS Plastic, 119×65×39mm",
@@ -260,7 +260,7 @@ export const products: Product[] = [
       "3+ Million Clicks",
       "Software Support"
     ],
-    image: "/products/gm21.png",
+    image: "/products/product-p2-2.png",
     webLink: "www.meetion.com/MT-GM21.html"
   },
   {
@@ -268,7 +268,7 @@ export const products: Product[] = [
     model: "GM19",
     name: "GM19 RGB Gaming Mouse",
     category: "mouse",
-    price: 3335,
+    price: roundPrice(3335),
     description: "Ergonomic gaming mouse with high precision sensor.",
     features: [
       "ABS Plastic, 123×67×43mm",
@@ -279,7 +279,7 @@ export const products: Product[] = [
       "5+ Million Clicks",
       "Software Support"
     ],
-    image: "/products/gm19.png",
+    image: "/products/product-p2-3.png",
     webLink: "www.meetion.com/MT-GM19.html"
   },
   {
@@ -287,7 +287,7 @@ export const products: Product[] = [
     model: "GM015",
     name: "GM015 RGB Gaming Mouse",
     category: "mouse",
-    price: 2415,
+    price: roundPrice(2415),
     description: "Affordable gaming mouse with RGB lighting.",
     features: [
       "ABS Plastic, 123×62×42mm",
@@ -298,7 +298,7 @@ export const products: Product[] = [
       "5+ Million Clicks",
       "Software Support"
     ],
-    image: "/products/gm015.png",
+    image: "/products/product-p2-4.png",
     webLink: "www.meetion.com/MT-GM015.html"
   },
   {
@@ -306,7 +306,7 @@ export const products: Product[] = [
     model: "GW38 BLACK",
     name: "GW38 Tri-Mode Gaming Mouse",
     category: "mouse",
-    price: 6325,
+    price: roundPrice(6325),
     description: "Premium wireless gaming mouse with charging dock.",
     features: [
       "Wired + 2.4G + Bluetooth Tri-Mode",
@@ -319,7 +319,7 @@ export const products: Product[] = [
       "PAW3104 Sensor",
       "650mAh Battery"
     ],
-    image: "/products/gw38.png",
+    image: "/products/product-p2-5.png",
     webLink: "www.meetion.com/MT-GW38.html",
     featured: true,
     badge: "Wireless"
@@ -329,7 +329,7 @@ export const products: Product[] = [
     model: "GW32",
     name: "GW32 Tri-Mode Gaming Mouse",
     category: "mouse",
-    price: 5520,
+    price: roundPrice(5520),
     description: "Ergonomic wireless gaming mouse with long battery life.",
     features: [
       "Wired + 2.4G + Bluetooth Tri-Mode",
@@ -341,7 +341,7 @@ export const products: Product[] = [
       "700mAh Battery",
       "35 Hours Light ON / 115 Hours Light OFF"
     ],
-    image: "/products/gw32.png",
+    image: "/products/product-p2-6.png",
     webLink: "www.meetion.com/MT-GW32.html"
   },
   {
@@ -349,7 +349,7 @@ export const products: Product[] = [
     model: "M930",
     name: "M930 Gaming Mouse",
     category: "mouse",
-    price: 1898,
+    price: roundPrice(1898),
     description: "Budget-friendly gaming mouse with 4-color backlight.",
     features: [
       "ABS Plastic, 127×72×39mm",
@@ -358,7 +358,7 @@ export const products: Product[] = [
       "2+ Million Clicks",
       "PVC Cable"
     ],
-    image: "/products/m930.png",
+    image: "/products/product-p2-7.png",
     webLink: "www.meetion.com/MT-M930.html"
   },
   {
@@ -366,7 +366,7 @@ export const products: Product[] = [
     model: "M915",
     name: "M915 Wired Mouse",
     category: "mouse",
-    price: 1380,
+    price: roundPrice(1380),
     description: "Comfortable wired mouse with backlight.",
     features: [
       "ABS Plastic, 135×73×42mm",
@@ -375,17 +375,17 @@ export const products: Product[] = [
       "3+ Million Clicks",
       "PVC Cable"
     ],
-    image: "/products/m915.png",
+    image: "/products/product-p2-8.png",
     webLink: "www.meetion.com/MT-M915.html"
   },
   
-  // Headsets
+  // Headsets - Page 3 images
   {
     id: "bth013",
     model: "BTH013",
     name: "BTH013 Tri-Mode Gaming Headset",
     category: "headset",
-    price: 8625,
+    price: roundPrice(8625),
     description: "Premium wireless gaming headset with 40-hour battery.",
     features: [
       "Wired + 2.4G + Bluetooth 5.3 Tri-Mode",
@@ -398,7 +398,7 @@ export const products: Product[] = [
       "50mm Speaker Size",
       "20Hz - 20kHz Frequency"
     ],
-    image: "/products/bth013.png",
+    image: "/products/product-p3-1.png",
     featured: true,
     badge: "Premium"
   },
@@ -407,7 +407,7 @@ export const products: Product[] = [
     model: "HP099",
     name: "HP099 7.1 Surround Gaming Headset",
     category: "headset",
-    price: 4830,
+    price: roundPrice(4830),
     description: "USB gaming headset with 7.1 HiFi surround sound.",
     features: [
       "ABS Plastic, 210×230×95mm",
@@ -419,7 +419,7 @@ export const products: Product[] = [
       "1.80m Cable",
       "HiFi 7.1 Surround"
     ],
-    image: "/products/hp099.png",
+    image: "/products/product-p3-2.png",
     webLink: "www.meetion.com/MT-HP099.html"
   },
   {
@@ -427,7 +427,7 @@ export const products: Product[] = [
     model: "HP030",
     name: "HP030 USB Gaming Headset",
     category: "headset",
-    price: 4140,
+    price: roundPrice(4140),
     description: "Comfortable USB gaming headset with volume control.",
     features: [
       "ABS Plastic, 200×115×220mm",
@@ -437,7 +437,7 @@ export const products: Product[] = [
       "USB Stereo",
       "1.80m Cable"
     ],
-    image: "/products/hp030.png",
+    image: "/products/product-p3-3.png",
     webLink: "www.meetion.com/MT-HP030.html"
   },
   {
@@ -445,7 +445,7 @@ export const products: Product[] = [
     model: "HP022",
     name: "HP022 Gaming Headset",
     category: "headset",
-    price: 2875,
+    price: roundPrice(2875),
     description: "Versatile gaming headset with dual connectivity.",
     features: [
       "ABS Plastic",
@@ -454,7 +454,7 @@ export const products: Product[] = [
       "φ3.5mm Stereo Jack×2 + USB×1",
       "1.80m Cable"
     ],
-    image: "/products/hp022.png",
+    image: "/products/product-p3-4.png",
     webLink: "www.meetion.com/MT-HP022.html"
   },
   {
@@ -462,7 +462,7 @@ export const products: Product[] = [
     model: "HP021",
     name: "HP021 Gaming Headset",
     category: "headset",
-    price: 2645,
+    price: roundPrice(2645),
     description: "Entry-level gaming headset with clear audio.",
     features: [
       "ABS Plastic",
@@ -471,7 +471,7 @@ export const products: Product[] = [
       "φ3.5mm Stereo Jack×2 + USB×1",
       "1.80m Cable"
     ],
-    image: "/products/hp021.png",
+    image: "/products/product-p3-5.png",
     webLink: "www.meetion.com/MT-HP021.html"
   },
   {
@@ -479,7 +479,7 @@ export const products: Product[] = [
     model: "HP020",
     name: "HP020 USB Gaming Headset",
     category: "headset",
-    price: 3261,
+    price: roundPrice(3261),
     description: "Comfortable gaming headset with volume control.",
     features: [
       "ABS Plastic, 185×210×110mm",
@@ -489,7 +489,7 @@ export const products: Product[] = [
       "φ3.5mm Stereo Jack×2 + USB×1",
       "1.80m Cable"
     ],
-    image: "/products/hp020.png",
+    image: "/products/product-p3-6.png",
     webLink: "www.meetion.com/MT-HP020.html"
   },
   {
@@ -497,7 +497,7 @@ export const products: Product[] = [
     model: "HP010",
     name: "HP010 Wired Headset",
     category: "headset",
-    price: 2254,
+    price: roundPrice(2254),
     description: "Budget-friendly wired headset for gaming.",
     features: [
       "ABS Plastic, 250×88×75mm",
@@ -507,7 +507,7 @@ export const products: Product[] = [
       "φ3.5mm Stereo Jack×2",
       "1.80m Cable"
     ],
-    image: "/products/hp010.png",
+    image: "/products/product-1.png",
     webLink: "www.meetion.com/MT-HP010.html"
   },
 
@@ -517,7 +517,7 @@ export const products: Product[] = [
     model: "C490",
     name: "C490 4-in-1 Gaming Kit",
     category: "combo",
-    price: 5336,
+    price: roundPrice(5336),
     description: "Complete gaming kit with mouse, keyboard, headset and mousepad.",
     features: [
       "Mouse: 6D/3200DPI/4000FPS/30IPS",
@@ -525,7 +525,7 @@ export const products: Product[] = [
       "Headset: RGB/φ3.5 Stereo+USB",
       "MousePad: Soft Cloth with Rubber Base"
     ],
-    image: "/products/c490.png",
+    image: "/products/product-2.png",
     webLink: "www.meetion.com/mt-C490.html",
     featured: true,
     badge: "Value Pack"
@@ -535,7 +535,7 @@ export const products: Product[] = [
     model: "C505",
     name: "C505 4-in-1 Gaming Kit",
     category: "combo",
-    price: 5980,
+    price: roundPrice(5980),
     description: "Premium gaming kit with enhanced components.",
     features: [
       "Mouse: 6D/3200DPI/4000FPS/30IPS",
@@ -543,7 +543,7 @@ export const products: Product[] = [
       "Headset: RGB/φ3.5 Stereo+USB",
       "MousePad: Soft Cloth with Rubber Base, 3mm"
     ],
-    image: "/products/c505.png",
+    image: "/products/product-3.png",
     webLink: "www.meetion.com/mt-C505.html"
   },
 
@@ -553,7 +553,7 @@ export const products: Product[] = [
     model: "SP2011",
     name: "SP2011 2.0 Desktop Speaker",
     category: "speaker",
-    price: 2093,
+    price: roundPrice(2093),
     description: "Compact 2.0 desktop speaker system.",
     features: [
       "RMS: 3W×2",
@@ -564,7 +564,7 @@ export const products: Product[] = [
       "Volume Control",
       "Size: 67×79×98mm"
     ],
-    image: "/products/sp2011.png",
+    image: "/products/product-4.png",
     webLink: "www.meetion.com/MT-SP2011.html"
   },
   {
@@ -572,7 +572,7 @@ export const products: Product[] = [
     model: "SP2111",
     name: "SP2111 2.1 Speaker System",
     category: "speaker",
-    price: 5578,
+    price: roundPrice(5578),
     description: "Powerful 2.1 speaker system with subwoofer.",
     features: [
       "RMS: 5W + 3W×2",
@@ -583,7 +583,7 @@ export const products: Product[] = [
       "Volume Control",
       "Subwoofer: 110×131×158mm"
     ],
-    image: "/products/sp2111.png",
+    image: "/products/product-5.png",
     webLink: "www.meetion.com/MT-SP2111.html"
   },
 
@@ -593,7 +593,7 @@ export const products: Product[] = [
     model: "MC20",
     name: "MC20 Gaming Microphone",
     category: "microphone",
-    price: 5980,
+    price: roundPrice(5980),
     description: "USB-C gaming/streaming microphone with RGB.",
     features: [
       "ABS Plastic",
@@ -603,7 +603,7 @@ export const products: Product[] = [
       "Omnidirectional",
       "USB-TypeC, 2.20m Cable"
     ],
-    image: "/products/mc20.png",
+    image: "/products/product-6.png",
     webLink: "www.meetion.com/MT-MC20.html"
   },
   {
@@ -611,7 +611,7 @@ export const products: Product[] = [
     model: "MC13",
     name: "MC13 Desktop Microphone",
     category: "microphone",
-    price: 2668,
+    price: roundPrice(2668),
     description: "Compact desktop microphone with ON/OFF switch.",
     features: [
       "ABS Plastic",
@@ -621,7 +621,7 @@ export const products: Product[] = [
       "Omnidirectional",
       "USB 2.0, 2.20m Cable"
     ],
-    image: "/products/mc13.png",
+    image: "/products/product-7.png",
     webLink: "www.meetion.com/MT-MC13.html"
   },
 
@@ -631,7 +631,7 @@ export const products: Product[] = [
     model: "CW295",
     name: "CW295 Wireless Keyboard & Mouse Combo",
     category: "combo",
-    price: 3220,
+    price: roundPrice(3220),
     description: "Battery-powered 2.4G wireless office combo.",
     features: [
       "2.4G Wireless",
@@ -640,7 +640,7 @@ export const products: Product[] = [
       "Ergonomic Ambidextrous Mouse",
       "1 AA + 1 AAA Battery Included"
     ],
-    image: "/products/cw295.png",
+    image: "/products/product-8.png",
     webLink: "www.meetion.com/MT-CW295.html"
   },
   {
@@ -648,7 +648,7 @@ export const products: Product[] = [
     model: "Mini5000",
     name: "Mini5000 75% Wireless Combo",
     category: "combo",
-    price: 3680,
+    price: roundPrice(3680),
     description: "Compact dual-mode wireless keyboard and mouse combo.",
     features: [
       "Battery-Powered Dual-Mode",
@@ -656,7 +656,7 @@ export const products: Product[] = [
       "75% Keyboard Layout",
       "1 AA + 1 AAA Battery Included"
     ],
-    image: "/products/mini5000.png"
+    image: "/products/product-9.png"
   },
 
   // Wireless Mice
@@ -665,7 +665,7 @@ export const products: Product[] = [
     model: "R545 BLACK",
     name: "R545 Wireless Mouse",
     category: "mouse",
-    price: 1093,
+    price: roundPrice(1093),
     description: "Compact wireless mouse for everyday use.",
     features: [
       "2.4G Wireless",
@@ -673,14 +673,14 @@ export const products: Product[] = [
       "Max 1600 DPI",
       "AA×1 Battery"
     ],
-    image: "/products/r545.png"
+    image: "/products/product-10.png"
   },
   {
     id: "r547-black",
     model: "R547 BLACK",
     name: "R547 Wireless Mouse",
     category: "mouse",
-    price: 1265,
+    price: roundPrice(1265),
     description: "Ergonomic wireless mouse with extra button.",
     features: [
       "2.4G Wireless",
@@ -688,14 +688,14 @@ export const products: Product[] = [
       "Max 1600 DPI",
       "AA×1 Battery"
     ],
-    image: "/products/r547.png"
+    image: "/products/product-11.png"
   },
   {
     id: "m360",
     model: "M360",
     name: "M360 Silent Wired Mouse",
     category: "mouse",
-    price: 978,
+    price: roundPrice(978),
     description: "Silent wired mouse for quiet environments.",
     features: [
       "Wired USB",
@@ -703,7 +703,7 @@ export const products: Product[] = [
       "1200 DPI",
       "1.5m Cable"
     ],
-    image: "/products/m360.png"
+    image: "/products/product-12.png"
   }
 ];
 
