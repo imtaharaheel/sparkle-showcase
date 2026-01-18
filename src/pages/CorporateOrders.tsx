@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Building2, Mail, Phone, User, Package, DollarSign, FileText, Send, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/Logo";
 
 const CorporateOrders = () => {
   const { toast } = useToast();
@@ -97,6 +98,9 @@ Requirement: ${formData.requirement}`;
             transition={{ duration: 0.6 }}
             className="text-center"
           >
+            <div className="flex justify-center mb-4">
+              <Logo size="lg" />
+            </div>
             <span className="mb-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
               For Businesses
             </span>

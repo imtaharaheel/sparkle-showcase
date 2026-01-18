@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import logoImage from "@/assets/logo.jpeg";
+import logoImage from "@/assets/logo.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Zap, Shield, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "./AnimatedBackground";
+import { Logo } from "./Logo";
 
 const features = [
   { icon: Zap, label: "High Performance" },
@@ -117,10 +118,13 @@ export const HeroSection = () => {
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                <span className="font-display text-5xl font-bold gradient-brand-text md:text-7xl">
-                  SAIM
+                <div className="flex justify-center mb-4">
+                  <Logo size="lg" showText={false} />
+                </div>
+                <span className="font-display text-3xl font-bold gradient-brand-text md:text-5xl">
+                  SAIM ENTERPRISE
                 </span>
-                <p className="mt-2 text-lg text-muted-foreground">Enterprise • Premium Gaming Gear</p>
+                <p className="mt-2 text-lg text-muted-foreground">Premium Gaming Gear</p>
               </motion.div>
             </div>
           </div>

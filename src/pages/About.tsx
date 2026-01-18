@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { Logo } from "@/components/Logo";
 
 const stats = [
   { icon: Award, value: "10+", label: "Years Experience" },
@@ -134,10 +135,13 @@ const About = () => {
                       animate={{ y: [0, -10, 0] }}
                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      <span className="font-display text-6xl font-bold gradient-brand-text md:text-7xl">
-                        SAIM
+                      <div className="flex justify-center mb-4">
+                        <Logo size="lg" showText={false} />
+                      </div>
+                      <span className="font-display text-3xl font-bold gradient-brand-text md:text-5xl">
+                        SAIM ENTERPRISE
                       </span>
-                      <p className="mt-2 text-lg text-muted-foreground">Enterprise • Est. 2016</p>
+                      <p className="mt-2 text-lg text-muted-foreground">Est. 2016</p>
                     </motion.div>
                   </div>
                 </div>
