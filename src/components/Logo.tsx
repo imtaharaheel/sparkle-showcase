@@ -32,7 +32,7 @@ export const Logo = ({ size = "md", showText = true }: LogoProps) => {
           <span className={`font-display ${sizes[size].text} font-bold tracking-tight`}>
             <span className="gradient-brand-text">SAIM</span>
           </span>
-          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.2em] text-muted-foreground`}>
+          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.2em] text-gray-400`}>
             Enterprise
           </span>
         </div>

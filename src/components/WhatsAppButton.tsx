@@ -73,7 +73,7 @@ export const WhatsAppButton = () => {
       
       {/* Floating tooltip */}
       <motion.div
-        className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-card px-3 py-2 text-sm font-medium text-foreground shadow-lg"
+        className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-lg"
         initial={{ opacity: 0, x: 10 }}
         animate={{ opacity: [0, 1, 1, 0], x: [10, 0, 0, -10] }}
         transition={{ 
@@ -85,7 +85,7 @@ export const WhatsAppButton = () => {
         }}
       >
         Chat with us!
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 border-4 border-transparent border-l-card" />
+        <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 border-4 border-transparent border-l-white" />
       </motion.div>
     </motion.button>
   );
