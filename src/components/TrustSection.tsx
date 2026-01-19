@@ -50,23 +50,23 @@ export const TrustSection = () => {
           {trustItems.map((item, index) => (
             <motion.div
               key={item.title}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+              className="group relative overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-6 backdrop-blur-sm"
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               whileHover={{ 
                 scale: 1.02,
-                borderColor: "hsl(348 83% 40% / 0.5)",
+                borderColor: "hsl(348 83% 40% / 0.4)",
               }}
             >
-              {/* Hover glow effect */}
+              {/* Hover glow effect using brand color */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
               />
               
               <div className="relative z-10">
                 <motion.div
-                  className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10"
+                  className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 border border-primary/20"
                   whileHover={{ rotate: 5, scale: 1.1 }}
                 >
                   <item.icon className="h-7 w-7 text-primary" />
