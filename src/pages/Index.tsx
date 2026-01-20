@@ -8,7 +8,7 @@ import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f]">
       <Navbar variant="dark" />
       <main>
         <GamingHeroSection />
