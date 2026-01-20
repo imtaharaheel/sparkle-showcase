@@ -52,9 +52,29 @@
     --glow-primary: 0 10px 40px hsl(348 83% 40% / 0.2);
   }
 
-  .dark {
-    --background: 0 0% 99%;
-    --foreground: 0 0% 10%;
+  /* Dark gaming theme - used across all pages */
+  .dark,
+  .gaming-dark {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 5% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 5% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --secondary: 240 4% 12%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 240 4% 16%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 240 4% 15%;
+    --accent-foreground: 0 0% 95%;
+
+    --border: 240 4% 18%;
+    --input: 240 4% 15%;
   }
 }
 
@@ -99,26 +119,38 @@
     -webkit-backdrop-filter: blur(20px);
   }
 
+  .glass-dark {
+    background: hsl(240 6% 10% / 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(240 4% 18%);
+  }
+
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - Dark theme */
   ::-webkit-scrollbar {
     width: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(348 20% 96%);
+    background: hsl(240 6% 8%);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(348 30% 80%);
+    background: hsl(240 4% 25%);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(348 83% 40%);
+  }
+
+  /* Dark form inputs */
+  .dark-input {
+    @apply bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50 focus:ring-primary/20;
   }
 }
 

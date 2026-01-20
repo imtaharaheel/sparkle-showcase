@@ -1,26 +1,34 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { Building2, Package, Clock, Headphones, Shield, TrendingUp, User, Mail, Phone, Send, Briefcase, ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { MinimalFooter } from "@/components/MinimalFooter";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
+import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Building2, Mail, Phone, User, Package, DollarSign, FileText, Send, CheckCircle2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Logo } from "@/components/Logo";
+import { useToast } from "@/components/ui/use-toast";
+
+const WHATSAPP_NUMBER = "9233442914563";
 
 const CorporateOrders = () => {
   const { toast } = useToast();
+  const heroRef = useRef<HTMLDivElement>(null);
+  const benefitsRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  
+  const isHeroInView = useInView(heroRef, { once: true });
+  const isBenefitsInView = useInView(benefitsRef, { once: true, margin: "-100px" });
+  const isFormInView = useInView(formRef, { once: true, margin: "-100px" });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     company: "",
+    email: "",
     phone: "",
-    quantity: "",
-    targetPrice: "",
-    requirement: "",
+    requirements: ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -30,84 +38,111 @@ const CorporateOrders = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Open WhatsApp with form data
-    const message = `*Corporate Order Inquiry*
-    
-Name: ${formData.name}
-Email: ${formData.email}
-Company: ${formData.company}
-Phone: ${formData.phone}
-Quantity: ${formData.quantity}
-Target Price: ${formData.targetPrice}
-Requirement: ${formData.requirement}`;
-    
-    const whatsappUrl = `https://wa.me/9233442914563?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
-    
-    toast({
-      title: "Inquiry Sent!",
-      description: "We'll get back to you shortly via WhatsApp.",
-    });
-    
-    setIsSubmitting(false);
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      phone: "",
-      quantity: "",
-      targetPrice: "",
-      requirement: "",
-    });
+    setTimeout(() => {
+      const message = `Corporate Inquiry\n\nName: ${formData.name}\nCompany: ${formData.company}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nRequirements:\n${formData.requirements}`;
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
+      
+      toast({
+        title: "Opening WhatsApp",
+        description: "Your inquiry details have been prepared. Complete the conversation on WhatsApp.",
+      });
+      
+      setIsSubmitting(false);
+    }, 500);
   };
 
-  const formFields = [
-    { name: "name", label: "Your Name", icon: User, type: "text", placeholder: "John Doe" },
-    { name: "email", label: "E-mail", icon: Mail, type: "email", placeholder: "john@company.com" },
-    { name: "company", label: "Company", icon: Building2, type: "text", placeholder: "Your Company Name" },
-    { name: "phone", label: "Phone", icon: Phone, type: "tel", placeholder: "+92 XXX XXXXXXX" },
-    { name: "quantity", label: "Quantity", icon: Package, type: "text", placeholder: "e.g., 50 units" },
-    { name: "targetPrice", label: "Procurement Target Price", icon: DollarSign, type: "text", placeholder: "Your budget range" },
-  ];
-
   const benefits = [
-    { icon: CheckCircle2, title: "Bulk Discounts", description: "Special pricing for large orders" },
-    { icon: CheckCircle2, title: "Priority Support", description: "Dedicated account manager" },
-    { icon: CheckCircle2, title: "Custom Solutions", description: "Tailored to your needs" },
-    { icon: CheckCircle2, title: "Fast Delivery", description: "Express shipping available" },
+    { 
+      icon: Package, 
+      title: "Bulk Pricing", 
+      description: "Get exclusive discounts on large orders" 
+    },
+    { 
+      icon: Clock, 
+      title: "Priority Delivery", 
+      description: "Fast-tracked processing for business orders" 
+    },
+    { 
+      icon: Headphones, 
+      title: "Dedicated Support", 
+      description: "Personal account manager for your business" 
+    },
+    { 
+      icon: Shield, 
+      title: "Extended Warranty", 
+      description: "Enhanced warranty coverage for bulk purchases" 
+    },
+    { 
+      icon: TrendingUp, 
+      title: "Flexible Payment", 
+      description: "Custom payment terms for qualified businesses" 
+    },
+    { 
+      icon: Building2, 
+      title: "Custom Solutions", 
+      description: "Tailored tech solutions for your organization" 
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-[#0a0a0f]">
+      <Navbar variant="dark" />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-12 md:pt-32 md:pb-16">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
+      <section ref={heroRef} className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24">
+        {/* Animated background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-[#0a0a0f] to-[#0a0a0f]" />
+        <motion.div 
+          className="absolute top-20 right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+        <motion.div 
+          className="absolute bottom-0 left-1/3 w-80 h-80 bg-[#6366f1]/20 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            opacity: [0.2, 0.3, 0.2],
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+        
         <div className="container relative mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isHeroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <div className="flex justify-center mb-4">
+            <motion.div 
+              className="flex justify-center mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={isHeroInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ delay: 0.2 }}
+            >
               <Logo size="lg" />
-            </div>
-            <span className="mb-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-              For Businesses
-            </span>
-            <h1 className="mb-4 font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
+            </motion.div>
+            
+            <motion.div
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isHeroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.3 }}
+            >
+              <Briefcase className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">For Businesses</span>
+            </motion.div>
+            
+            <h1 className="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
               Corporate <span className="gradient-brand-text">Orders</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            <p className="mx-auto max-w-2xl text-lg text-gray-400">
               Get premium tech products for your business with exclusive bulk pricing and dedicated support.
             </p>
           </motion.div>
@@ -115,129 +150,202 @@ Requirement: ${formData.requirement}`;
       </section>
 
       {/* Benefits Section */}
-      <section className="py-8 md:py-12">
+      <section ref={benefitsRef} className="py-16 md:py-24 bg-[#08080c]">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+          <motion.div
+            className="mb-12 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isBenefitsInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-4xl">
+              Why Partner <span className="gradient-brand-text">With Us</span>?
+            </h2>
+            <p className="mx-auto max-w-2xl text-gray-400">
+              We offer comprehensive solutions tailored for business needs
+            </p>
+          </motion.div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="rounded-xl border border-border bg-card p-4 text-center md:p-6"
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+                initial={{ opacity: 0, y: 30 }}
+                animate={isBenefitsInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  borderColor: "hsl(348 83% 40% / 0.5)",
+                }}
               >
-                <benefit.icon className="mx-auto mb-2 h-8 w-8 text-primary md:h-10 md:w-10" />
-                <h3 className="mb-1 font-semibold text-foreground">{benefit.title}</h3>
-                <p className="text-xs text-muted-foreground md:text-sm">{benefit.description}</p>
+                {/* Hover glow */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                />
+                
+                <div className="relative z-10">
+                  <motion.div
+                    className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10"
+                    whileHover={{ rotate: 5, scale: 1.1 }}
+                  >
+                    <benefit.icon className="h-7 w-7 text-primary" />
+                  </motion.div>
+                  
+                  <h3 className="mb-2 font-display text-xl font-semibold text-white">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {benefit.description}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Form Section */}
-      <section className="py-12 md:py-16">
+      {/* Contact Form Section */}
+      <section ref={formRef} className="py-16 md:py-24 bg-[#0a0a0f]">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="rounded-2xl border border-border bg-card p-6 shadow-xl md:p-8"
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              animate={isFormInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6 }}
             >
-              <div className="mb-6 text-center">
-                <h2 className="mb-2 font-display text-2xl font-bold md:text-3xl">
-                  Submit Your Inquiry
-                </h2>
-                <p className="text-muted-foreground">
-                  Fill out the form below and we'll get back to you within 24 hours.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {formFields.map((field, index) => (
-                  <motion.div
-                    key={field.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-                  >
-                    <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                      <field.icon className="h-4 w-4 text-primary" />
-                      {field.label}
-                    </label>
-                    <Input
-                      type={field.type}
-                      name={field.name}
-                      value={formData[field.name as keyof typeof formData]}
-                      onChange={handleChange}
-                      placeholder={field.placeholder}
-                      required
-                      className="h-12 border-border bg-background transition-all focus:border-primary focus:ring-primary"
-                    />
-                  </motion.div>
-                ))}
-
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.6 }}
-                >
-                  <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                    <FileText className="h-4 w-4 text-primary" />
-                    Requirement
-                  </label>
-                  <Textarea
-                    name="requirement"
-                    value={formData.requirement}
-                    onChange={handleChange}
-                    placeholder="Describe your requirements in detail..."
-                    required
-                    rows={4}
-                    className="resize-none border-border bg-background transition-all focus:border-primary focus:ring-primary"
-                  />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.7 }}
-                  className="pt-2"
-                >
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="h-12 w-full gap-2 bg-primary text-lg font-semibold text-primary-foreground hover:bg-primary/90"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <motion.span
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="h-5 w-5 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground"
-                        />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-5 w-5" />
-                        Submit Inquiry
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              </form>
-
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                By submitting, you'll be redirected to WhatsApp to confirm your inquiry.
+              <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-4xl">
+                Get a <span className="gradient-brand-text">Quote</span>
+              </h2>
+              <p className="text-gray-400">
+                Fill out the form below and we'll get back to you via WhatsApp
               </p>
             </motion.div>
+
+            <motion.form
+              onSubmit={handleSubmit}
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+              initial={{ opacity: 0, y: 30 }}
+              animate={isFormInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              {/* Form glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+              
+              <div className="relative z-10 space-y-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <User className="h-4 w-4 text-primary" />
+                      Your Name
+                    </label>
+                    <Input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="John Doe"
+                      required
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      Company Name
+                    </label>
+                    <Input
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      placeholder="Company Ltd."
+                      required
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" />
+                      Email Address
+                    </label>
+                    <Input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="john@company.com"
+                      required
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-primary" />
+                      Phone Number
+                    </label>
+                    <Input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+92 300 1234567"
+                      required
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    Requirements
+                  </label>
+                  <Textarea
+                    name="requirements"
+                    value={formData.requirements}
+                    onChange={handleChange}
+                    placeholder="Tell us about your requirements, quantity, and any specific products you're interested in..."
+                    rows={5}
+                    required
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50 resize-none"
+                  />
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-3 rounded-full bg-[#25D366] px-8 py-4 font-semibold text-white shadow-lg disabled:opacity-70"
+                  whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(37, 211, 102, 0.5)" }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isSubmitting ? (
+                    <motion.div
+                      className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      Submit via WhatsApp
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </motion.form>
           </div>
         </div>
       </section>
 
-      <Footer />
+      <MinimalFooter />
       <WhatsAppButton />
+      <StickyWhatsAppCTA />
     </div>
   );
 };
