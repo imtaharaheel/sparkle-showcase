@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 
-const WHATSAPP_NUMBER = "9233442914563";
+const WHATSAPP_NUMBER = "923342914563";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in your products.";
 
 const WhatsAppIcon = () => (
