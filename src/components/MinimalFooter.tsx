@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
+import { MapPin } from "lucide-react";
 import { Logo } from "./Logo";
 
-const WHATSAPP_NUMBER = "9233442914563";
+const WHATSAPP_NUMBER = "923342914563";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in your products.";
+const SHOP_LOCATION = "Saim Enterprise, TechnoCity, I.I. Chundrigar Road";
 
 const WhatsAppIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -45,6 +47,26 @@ export const MinimalFooter = () => {
             >
               <WhatsAppIcon />
             </motion.a>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-center gap-2 text-gray-400">
+            <MapPin className="h-4 w-4 text-primary" />
+            <span className="text-sm">{SHOP_LOCATION}</span>
+          </div>
+
+          {/* Map */}
+          <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-white/10">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3619.5!2d67.0076!3d24.8537!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3eb33e0eb1c1cd87%3A0x4f19fc9c1fdcb7a8!2sTechnoCity%2C%20I.I.%20Chundrigar%20Road%2C%20Karachi!5e0!3m2!1sen!2spk!4v1700000000000"
+              width="100%"
+              height="200"
+              style={{ border: 0, filter: "invert(90%) hue-rotate(180deg)" }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Saim Enterprise Location"
+            />
           </div>
 
           {/* Copyright */}

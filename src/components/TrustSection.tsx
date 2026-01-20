@@ -6,7 +6,7 @@ const trustItems = [
   {
     icon: Shield,
     title: "Genuine Products",
-    description: "100% authentic products with warranty",
+    description: "100% authentic & original products",
   },
   {
     icon: Award,

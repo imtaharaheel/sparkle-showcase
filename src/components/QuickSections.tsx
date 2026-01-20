@@ -5,7 +5,7 @@ import customPcImage from "@/assets/custom-pc.jpg";
 import gamingAccessoriesImage from "@/assets/gaming-accessories.jpg";
 import appleProductsImage from "@/assets/apple-products.jpg";
 
-const WHATSAPP_NUMBER = "9233442914563";
+const WHATSAPP_NUMBER = "923342914563";
 
 const WhatsAppIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -142,7 +142,7 @@ export const QuickSections = () => {
     },
     {
       title: "Apple Products",
-      subtitle: "Authorized Reseller",
+      subtitle: "Recognized Seller",
       description: "MacBooks, iPads, iPhones, and accessories. Genuine Apple products with competitive pricing and local support.",
       image: appleProductsImage,
       icon: Apple,

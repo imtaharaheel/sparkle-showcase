@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import heroImage from "@/assets/hero-gaming-pc.jpg";
 
-const WHATSAPP_NUMBER = "9233442914563";
+const WHATSAPP_NUMBER = "923342914563";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in your products.";
 
 const WhatsAppIcon = () => (
@@ -165,14 +165,14 @@ export const GamingHeroSection = () => {
             </motion.button>
 
             {/* Secondary CTA */}
-            <motion.button
-              onClick={() => handleWhatsApp("Hi! I'd like to view your product catalog.")}
+            <motion.a
+              href="/products"
               className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-4 text-lg font-medium text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:border-white/40"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               View Products
-            </motion.button>
+            </motion.a>
           </motion.div>
         </div>
 
