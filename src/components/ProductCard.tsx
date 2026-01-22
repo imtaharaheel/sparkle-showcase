@@ -19,7 +19,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     const message = `Hi! I'm interested in ${product.name} (${product.model}) - ${formatPrice(product.price)}`;
-    window.open(`https://wa.me/9233442914563?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(`https://wa.me/923342914563?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {

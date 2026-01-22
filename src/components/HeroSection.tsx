@@ -72,7 +72,7 @@ export const HeroSection = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="border-primary/50 hover:bg-primary/10">
-              <a href="https://wa.me/9233442914563" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/923342914563" target="_blank" rel="noopener noreferrer">
                 Contact Us
               </a>
             </Button>
