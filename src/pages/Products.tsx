@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { Search, X, Sparkles } from "lucide-react";
@@ -7,7 +7,8 @@ import { MinimalFooter } from "@/components/MinimalFooter";
 import { ProductCard } from "@/components/ProductCard";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
-import { products, categories } from "@/data/products";
+import { QuickQuoteDrawer } from "@/components/QuickQuoteDrawer";
+import { products, categories, type Product } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [quoteDrawerOpen, setQuoteDrawerOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const isHeaderInView = useInView(headerRef, { once: true });
   
@@ -56,6 +59,11 @@ const Products = () => {
     searchParams.delete("category");
     setSearchParams(searchParams);
   };
+
+  const handleOpenQuote = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setQuoteDrawerOpen(true);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -207,7 +215,12 @@ const Products = () => {
                 </motion.p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredProducts.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      index={index}
+                      onQuickQuote={handleOpenQuote}
+                    />
                   ))}
                 </div>
               </>
@@ -247,6 +260,11 @@ const Products = () => {
       <MinimalFooter />
       <WhatsAppButton />
       <StickyWhatsAppCTA />
+      <QuickQuoteDrawer 
+        open={quoteDrawerOpen} 
+        onOpenChange={setQuoteDrawerOpen} 
+        product={selectedProduct}
+      />
     </div>
   );
 };
