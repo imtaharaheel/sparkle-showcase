@@ -77,17 +77,17 @@ export const Footer = () => {
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
                 <a 
-                  href="https://wa.me/9233442914563" 
+                  href="https://wa.me/923342914563" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="transition-colors hover:text-primary"
                 >
-                  +92 334 4291 4563
+                  +92 334 2914563
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+92 334 4291 4563</span>
+                <span>+92 334 2914563</span>
               </li>
             </ul>
           </div>
