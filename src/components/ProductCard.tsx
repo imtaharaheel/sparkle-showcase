@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { Product, formatPrice } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,9 +9,10 @@ import { useState } from "react";
 interface ProductCardProps {
   product: Product;
   index?: number;
+  onQuickQuote?: (product: Product) => void;
 }
 
-export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
+export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardProps) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
@@ -20,6 +21,12 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     e.stopPropagation();
     const message = `Hi! I'm interested in ${product.name} (${product.model}) - ${formatPrice(product.price)}`;
     window.open(`https://wa.me/923342914563?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  const handleQuickQuote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickQuote) onQuickQuote(product);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -113,6 +120,17 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
               </span>
               
               <div className="flex gap-2">
+                {onQuickQuote && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={handleQuickQuote}
+                    aria-label="Quick Quote"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
