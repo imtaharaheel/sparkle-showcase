@@ -94,7 +94,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-12 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Saim Enterprise. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Saim Enterprise. All rights reserved. </p>
         </div>
       </div>
     </footer>
