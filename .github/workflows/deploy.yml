@@ -34,8 +34,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Ensure .nojekyll exists
-        run: touch ./dist/.nojekyll
+      - name: Verify build output
+        run: |
+          echo "Build output structure:"
+          ls -la ./dist/ || echo "dist directory not found"
+          echo "Checking for .nojekyll:"
+          ls -la ./dist/.nojekyll || echo ".nojekyll not found, creating..."
+          touch ./dist/.nojekyll
+          echo "Checking index.html:"
+          head -20 ./dist/index.html || echo "index.html not found"
+          echo "Checking for JavaScript files:"
+          find ./dist -name "*.js" -type f | head -5 || echo "No JS files found"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
