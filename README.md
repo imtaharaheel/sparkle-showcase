@@ -1,4 +1,4 @@
-# Saim Enterprise - Gaming Peripherals Showcase
+# Saim Enterprises - Gaming Peripherals Showcase
 
 ## Project Overview
 
