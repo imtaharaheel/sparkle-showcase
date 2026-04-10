@@ -1,0 +1,2 @@
+-- Optional local seed after migrations. Category data is seeded in migrations.
+-- Add dev fixtures here if needed.

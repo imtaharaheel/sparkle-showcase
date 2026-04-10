@@ -3,8 +3,10 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // https://vitejs.dev/config/
+// GitHub Pages project sites: set VITE_BASE=/repo-name/ in CI (see .github/workflows/deploy.yml).
+// Vercel / Netlify at domain root: leave unset (defaults to /).
 export default defineConfig(({ mode }) => ({
-  base: "/", // Use "/" for custom domain, or "/repository-name/" for GitHub Pages subpath
+  base: process.env.VITE_BASE ?? "/",
   server: {
     host: "::",
     port: 8080,

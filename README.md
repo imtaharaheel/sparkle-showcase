@@ -43,24 +43,46 @@ npm run dev
 
 ## Deployment
 
-### Deploy to GitHub Pages
+**If you already use GitHub Pages** (see below), you do **not** need Vercel—one host is enough.
 
-This project is configured for automatic deployment to GitHub Pages using GitHub Actions.
+### Optional: Vercel
 
-**Initial Setup:**
+Alternative host if you prefer it (SPA routes like `/admin/login` work with [`vercel.json`](vercel.json)).
 
-1. Push your code to a GitHub repository
-2. Go to your repository on GitHub
-3. Navigate to **Settings** → **Pages**
-4. Under **Source**, select **GitHub Actions** (not "Deploy from a branch")
-5. The workflow will automatically deploy when you push to the `main` branch
+1. Push the repo to GitHub.
+2. Sign in at [vercel.com](https://vercel.com) → **Add New** → **Project** → import the repo.
+3. **Environment Variables** (Production, and Preview if you want):
+   - `VITE_SUPABASE_URL` — Supabase **Project URL** (`https://<ref>.supabase.co`)
+   - `VITE_SUPABASE_ANON_KEY` — Supabase **anon public** key (Project Settings → API)
+4. Deploy (defaults: **Framework Preset Vite**, build `npm run build`, output `dist`).
+5. In Supabase → **Authentication** → **URL configuration**: set **Site URL** and **Redirect URLs** to your Vercel URL (e.g. `https://your-app.vercel.app`).
 
-**Manual Deployment:**
+[`vercel.json`](vercel.json) adds a SPA rewrite so deep links work.
 
-You can also trigger a manual deployment by:
-- Going to **Actions** tab in your repository
-- Selecting the "Deploy to GitHub Pages" workflow
-- Clicking **Run workflow**
+### Alternative: Netlify
+
+Connect the repo; [`netlify.toml`](netlify.toml) sets build and SPA fallback. Add the same `VITE_*` variables in Netlify **Site settings → Environment variables**.
+
+### GitHub Pages
+
+Uses [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+**Secrets** (Settings → Secrets and variables → **Actions**):
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+**Variables** (optional, Settings → Secrets and variables → **Actions** → **Variables**):
+
+- `VITE_BASE` — leave **unset** for default `https://<user>.github.io/<repo>/` (assets use `/repo/` prefix).
+- Set to **`/`** if the site is served at the **domain root** (e.g. custom domain on Pages without a repo subpath).
+
+**Pages setup:**
+
+1. **Settings** → **Pages** → Source: **GitHub Actions**
+2. Push to `main` or run the workflow manually under **Actions**
+
+The workflow copies `index.html` to `404.html` for client-side routing on Pages.
 
 ### Connect Custom Domain (saimenterprise.com)
 
@@ -104,6 +126,7 @@ The project is already configured with a `CNAME` file for your custom domain.
 1. After DNS is configured, go to your repository **Settings** → **Pages**
 2. Under **Custom domain**, enter: `saimenterprise.com`
 3. Check **Enforce HTTPS** (this will be available after DNS propagation)
+4. If you deploy with **GitHub Actions**, add repository **Variable** `VITE_BASE` = `/` so the built site matches a **root** custom domain (otherwise the default `/repo-name/` base is for `username.github.io/repo-name`).
 
 **Note:** DNS changes can take 24-48 hours to propagate. You can verify DNS propagation using tools like [whatsmydns.net](https://www.whatsmydns.net/).
 
