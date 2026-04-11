@@ -31,14 +31,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set Vite base path
+        id: vite_base
+        run: |
+          if [ -n "${{ vars.VITE_BASE }}" ]; then
+            echo "base=${{ vars.VITE_BASE }}" >> $GITHUB_OUTPUT
+          elif [ -f .github/pages-custom-domain-root ]; then
+            echo "base=/" >> $GITHUB_OUTPUT
+          else
+            echo "base=/${{ github.event.repository.name }}/" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          # Default: /repo/ for https://<user>.github.io/<repo>/
-          # Set repo Variable VITE_BASE=/ for a custom domain at site root (e.g. saimenterprise.com).
-          VITE_BASE: ${{ vars.VITE_BASE != '' && vars.VITE_BASE || format('/{0}/', github.event.repository.name) }}
+          VITE_BASE: ${{ steps.vite_base.outputs.base }}
 
       - name: SPA fallback (GitHub Pages has no server rewrites)
         run: cp dist/index.html dist/404.html
