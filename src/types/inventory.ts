@@ -15,6 +15,10 @@ export interface InventoryProduct {
   image_path: string | null;
   created_at: string;
   updated_at: string;
+  /** Stable id for URLs when migrating from the old demo catalog (e.g. mk14-black). */
+  legacy_demo_id?: string | null;
+  is_featured?: boolean;
+  listing_badge?: string | null;
 }
 
 export type StockStatusLabel = "In Stock" | "Low Stock" | "Out of Stock";
@@ -27,8 +31,15 @@ export function getStockStatus(quantity: number): StockStatusLabel {
 
 export function getPublicImageUrl(imagePath: string | null): string | null {
   if (!imagePath) return null;
-  const base = import.meta.env.VITE_SUPABASE_URL;
-  if (!base) return null;
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  if (imagePath.startsWith("/")) {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    return base ? `${base}${imagePath}` : imagePath;
+  }
+  const urlBase = import.meta.env.VITE_SUPABASE_URL;
+  if (!urlBase) return null;
   const encoded = imagePath.split("/").map(encodeURIComponent).join("/");
-  return `${base}/storage/v1/object/public/product-images/${encoded}`;
+  return `${urlBase}/storage/v1/object/public/product-images/${encoded}`;
 }

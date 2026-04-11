@@ -51,21 +51,52 @@ function inventoryModelLabel(p: InventoryProduct): string {
   return p.name.length > 52 ? `${p.name.slice(0, 49)}…` : p.name;
 }
 
+/** Detects normal Postgres gen_random_uuid() ids so we query the right column first. */
+function isDatabaseUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
+function splitDescriptionForStorefront(
+  description: string,
+  fallbackModel: string,
+): { model: string; description: string; webLink?: string } {
+  let text = description;
+  let web: string | undefined;
+  const linkMatch = text.match(/\n\nOfficial product page:\s*(https?:\/\/\S+)\s*$/i);
+  if (linkMatch && linkMatch.index !== undefined) {
+    web = linkMatch[1];
+    text = text.slice(0, linkMatch.index).trimEnd();
+  }
+  const lines = text.split("\n");
+  const first = lines[0] ?? "";
+  if (first.startsWith("Model:")) {
+    const model = first.replace(/^Model:\s*/, "").trim();
+    const body = lines.slice(1).join("\n").replace(/^\n+/, "").trim();
+    return { model, description: body, webLink: web };
+  }
+  return { model: fallbackModel, description: text.trim(), webLink: web };
+}
+
 function inventoryToStorefront(
   p: InventoryProduct,
   cat: InventoryCategory | undefined,
 ): StorefrontProduct {
+  const fallbackModel = inventoryModelLabel(p);
+  const parsed = splitDescriptionForStorefront(p.description, fallbackModel);
   const url = getPublicImageUrl(p.image_path);
+  const listingBadge = p.listing_badge?.trim();
   return {
-    id: p.id,
-    model: inventoryModelLabel(p),
+    id: p.legacy_demo_id?.trim() || p.id,
+    model: parsed.model,
     name: p.name,
-    description: p.description,
+    description: parsed.description,
     price: Number(p.price),
     image: url ?? "",
     category: cat?.slug ?? "accessory",
     features: [],
-    badge: p.stock_quantity === 0 ? "Out of Stock" : undefined,
+    webLink: parsed.webLink,
+    featured: Boolean(p.is_featured),
+    badge: p.stock_quantity === 0 ? "Out of Stock" : listingBadge || undefined,
   };
 }
 
@@ -152,18 +183,30 @@ export async function fetchCatalogProductById(id: string): Promise<StorefrontPro
     return null;
   }
   const supabase = getSupabase();
-  const { data: row, error } = await supabase
-    .from("inventory_products")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) {
-    throw new CustomException(error.message, error);
+
+  let inv: InventoryProduct | null = null;
+  if (isDatabaseUuid(id)) {
+    const { data, error } = await supabase.from("inventory_products").select("*").eq("id", id).maybeSingle();
+    if (error) {
+      throw new CustomException(error.message, error);
+    }
+    inv = (data as InventoryProduct) ?? null;
   }
-  if (!row) {
+  if (!inv) {
+    const { data, error } = await supabase
+      .from("inventory_products")
+      .select("*")
+      .eq("legacy_demo_id", id)
+      .maybeSingle();
+    if (error) {
+      throw new CustomException(error.message, error);
+    }
+    inv = (data as InventoryProduct) ?? null;
+  }
+
+  if (!inv) {
     return null;
   }
-  const inv = row as InventoryProduct;
   const { data: catRow, error: catError } = await supabase
     .from("categories")
     .select("*")
@@ -185,27 +228,47 @@ export async function fetchFeaturedCatalogProducts(limit = 8): Promise<Storefron
     return staticFeatured;
   }
 
-  const remaining = limit - staticFeatured.length;
-  if (remaining <= 0) {
-    return staticFeatured;
-  }
-
   const supabase = getSupabase();
-  const { data: productRows, error: productsError } = await supabase
-    .from("inventory_products")
-    .select("*")
-    .order("updated_at", { ascending: false })
-    .limit(remaining);
-  if (productsError) {
-    throw new CustomException(productsError.message, productsError);
-  }
   const { data: catRows, error: categoriesError } = await supabase.from("categories").select("*");
   if (categoriesError) {
     throw new CustomException(categoriesError.message, categoriesError);
   }
   const catById = new Map((catRows as InventoryCategory[]).map((c) => [c.id, c]));
-  const fromDb = (productRows as InventoryProduct[]).map((p) =>
-    inventoryToStorefront(p, catById.get(p.category_id)),
-  );
-  return [...staticFeatured, ...fromDb];
+  const toSf = (row: InventoryProduct) => inventoryToStorefront(row, catById.get(row.category_id));
+
+  const out: StorefrontProduct[] = [...staticFeatured];
+  const usedInvIds = new Set<string>();
+
+  const { data: featRows, error: featError } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .eq("is_featured", true)
+    .order("name");
+  if (featError) {
+    throw new CustomException(featError.message, featError);
+  }
+  for (const row of featRows ?? []) {
+    if (out.length >= limit) break;
+    const p = row as InventoryProduct;
+    usedInvIds.add(p.id);
+    out.push(toSf(p));
+  }
+
+  const { data: recentRows, error: recentError } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(limit * 2, 16));
+  if (recentError) {
+    throw new CustomException(recentError.message, recentError);
+  }
+  for (const row of recentRows ?? []) {
+    if (out.length >= limit) break;
+    const p = row as InventoryProduct;
+    if (usedInvIds.has(p.id)) continue;
+    usedInvIds.add(p.id);
+    out.push(toSf(p));
+  }
+
+  return out.slice(0, limit);
 }

@@ -50,12 +50,10 @@ export default function AdminDashboard() {
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>What you see here</AlertTitle>
+        <AlertTitle>Your product list</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          This admin area only lists products saved in your database (the same ones you add under Products). The
-          public site also shows the built-in demo catalog from the app; those demo items are not rows in the
-          database, so they do not appear in this list. To change a demo item from admin, create a new product
-          with the details you want—it will show on the site together with the demo catalog.
+          Everything in Admin → Products is stored in your Supabase database. The public catalog reads from the same
+          place, so what you add or edit here is what shoppers see (after the page refreshes).
         </AlertDescription>
       </Alert>
 

@@ -204,7 +204,7 @@ const ProductDetail = () => {
                     </span>
                   </div>
 
-                  <p className="mb-8 text-lg text-muted-foreground">{product.description}</p>
+                  <p className="mb-8 whitespace-pre-line text-lg text-muted-foreground">{product.description}</p>
 
                   <div className="mb-8 flex flex-wrap gap-4">
                     <Button
@@ -218,7 +218,11 @@ const ProductDetail = () => {
                     {product.webLink && (
                       <Button size="lg" variant="outline" asChild>
                         <a
-                          href={`https://${product.webLink}`}
+                          href={
+                            product.webLink.startsWith("http://") || product.webLink.startsWith("https://")
+                              ? product.webLink
+                              : `https://${product.webLink}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="gap-2"
