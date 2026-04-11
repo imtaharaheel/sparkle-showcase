@@ -49,13 +49,64 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-const productFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string(),
-  price: z.coerce.number().min(0, "Price must be 0 or more"),
-  stock_quantity: z.coerce.number().int().min(0, "Stock must be 0 or more"),
-  category_id: z.string().min(1, "Category is required"),
-});
+const stockPresetSchema = z.enum(["out_of_stock", "low_stock", "in_stock"]);
+
+type StockPreset = z.infer<typeof stockPresetSchema>;
+
+const STOCK_PRESET_LABELS: Record<StockPreset, string> = {
+  out_of_stock: "Out of stock",
+  low_stock: "Low stock (1–4 units)",
+  in_stock: "In stock (5+ units)",
+};
+
+function quantityToPreset(q: number): StockPreset {
+  if (q <= 0) return "out_of_stock";
+  if (q < 5) return "low_stock";
+  return "in_stock";
+}
+
+function normalizeStockQuantity(preset: StockPreset, qty: number): number {
+  if (preset === "out_of_stock") return 0;
+  if (preset === "low_stock") {
+    if (qty >= 1 && qty <= 4) return qty;
+    return 3;
+  }
+  if (qty >= 5) return qty;
+  return 10;
+}
+
+const productFormSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string(),
+    price: z.coerce.number().min(0, "Price must be 0 or more"),
+    stock_preset: stockPresetSchema,
+    stock_quantity: z.coerce.number().int().min(0, "Stock must be 0 or more"),
+    category_id: z.string().min(1, "Category is required"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.stock_preset === "out_of_stock" && data.stock_quantity !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Set quantity to 0 for out of stock",
+        path: ["stock_quantity"],
+      });
+    }
+    if (data.stock_preset === "low_stock" && (data.stock_quantity < 1 || data.stock_quantity > 4)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Low stock must be between 1 and 4",
+        path: ["stock_quantity"],
+      });
+    }
+    if (data.stock_preset === "in_stock" && data.stock_quantity < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "In stock must be at least 5",
+        path: ["stock_quantity"],
+      });
+    }
+  });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
@@ -152,10 +203,13 @@ export default function AdminProducts() {
       name: "",
       description: "",
       price: 0,
-      stock_quantity: 0,
+      stock_preset: "in_stock",
+      stock_quantity: 10,
       category_id: "",
     },
   });
+
+  const stockPreset = form.watch("stock_preset");
 
   const openCreate = () => {
     setEditing(null);
@@ -164,7 +218,8 @@ export default function AdminProducts() {
       name: "",
       description: "",
       price: 0,
-      stock_quantity: 0,
+      stock_preset: "in_stock",
+      stock_quantity: 10,
       category_id: categories[0]?.id ?? "",
     });
     setDialogOpen(true);
@@ -177,6 +232,7 @@ export default function AdminProducts() {
       name: p.name,
       description: p.description,
       price: Number(p.price),
+      stock_preset: quantityToPreset(p.stock_quantity),
       stock_quantity: p.stock_quantity,
       category_id: p.category_id,
     });
@@ -201,6 +257,7 @@ export default function AdminProducts() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
+      const stock_quantity = normalizeStockQuantity(values.stock_preset, values.stock_quantity);
       const supabase = getSupabase();
       let image_path = editing?.image_path ?? null;
       if (imageFile && editing?.image_path) {
@@ -219,7 +276,7 @@ export default function AdminProducts() {
             name: values.name,
             description: values.description,
             price: values.price,
-            stock_quantity: values.stock_quantity,
+            stock_quantity,
             category_id: values.category_id,
             ...(imageFile ? { image_path } : {}),
           })
@@ -235,7 +292,7 @@ export default function AdminProducts() {
           name: values.name,
           description: values.description,
           price: values.price,
-          stock_quantity: values.stock_quantity,
+          stock_quantity,
           category_id: values.category_id,
           image_path,
         });
@@ -466,34 +523,82 @@ export default function AdminProducts() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" min={0} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stock_preset"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock availability</FormLabel>
+                    <Select
+                      onValueChange={(v) => {
+                        const preset = v as StockPreset;
+                        field.onChange(preset);
+                        if (preset === "out_of_stock") {
+                          form.setValue("stock_quantity", 0);
+                        } else if (preset === "low_stock") {
+                          const q = form.getValues("stock_quantity");
+                          form.setValue("stock_quantity", q >= 1 && q <= 4 ? q : 3);
+                        } else {
+                          const q = form.getValues("stock_quantity");
+                          form.setValue("stock_quantity", q >= 5 ? q : 10);
+                        }
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
-                        <Input type="number" step="0.01" min={0} {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select stock status" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="stock_quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock quantity</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} step={1} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <SelectContent>
+                        {(Object.keys(STOCK_PRESET_LABELS) as StockPreset[]).map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {STOCK_PRESET_LABELS[key]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stock_quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Exact units in stock</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        disabled={stockPreset === "out_of_stock"}
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-muted-foreground text-xs">
+                      {stockPreset === "out_of_stock" && "Shown as out of stock on the store."}
+                      {stockPreset === "low_stock" && "Use 1–4 to match the low-stock badge on the store."}
+                      {stockPreset === "in_stock" && "Use 5 or more for the normal in-stock badge."}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="category_id"
