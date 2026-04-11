@@ -32,6 +32,7 @@ function buildDescription(p: Product): string {
 
 function main(): void {
   const header = `-- Demo catalog migrated from former src/data/products.ts (legacy slugs preserved for URLs).
+-- All rows are inserted under category "accessory" so you can fix categories in Admin.
 -- Idempotent: skips rows that already have the same legacy_demo_id.
 
 alter table public.inventory_products
@@ -53,7 +54,6 @@ alter table public.inventory_products
   for (const p of products) {
     const desc = escSql(buildDescription(p));
     const name = escSql(p.name);
-    const slug = escSql(p.category);
     const legacy = escSql(p.id);
     const img = p.image ? escSql(p.image) : "";
     const imageSql = img ? `'${img}'` : "null";
@@ -67,7 +67,7 @@ select
   '${desc}',
   ${price},
   10,
-  (select id from public.categories where slug = '${slug}' limit 1),
+  (select id from public.categories where slug = 'accessory' limit 1),
   ${imageSql},
   '${legacy}',
   ${featured},
