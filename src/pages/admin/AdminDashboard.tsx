@@ -4,6 +4,8 @@ import { getSupabase } from "@/lib/supabase";
 import { CustomException } from "@/lib/errors";
 import type { InventoryProduct } from "@/types/inventory";
 import { getStockStatus } from "@/types/inventory";
+import { Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,17 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm">Overview of your inventory.</p>
       </div>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>What you see here</AlertTitle>
+        <AlertDescription className="text-muted-foreground">
+          This admin area only lists products saved in your database (the same ones you add under Products). The
+          public site also shows the built-in demo catalog from the app; those demo items are not rows in the
+          database, so they do not appear in this list. To change a demo item from admin, create a new product
+          with the details you want—it will show on the site together with the demo catalog.
+        </AlertDescription>
+      </Alert>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>

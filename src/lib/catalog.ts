@@ -85,32 +85,30 @@ function staticProductToStorefront(p: Product): StorefrontProduct {
   };
 }
 
-export async function fetchCatalogCategories(): Promise<StorefrontCategory[]> {
-  if (!isSupabaseConfigured()) {
-    return staticCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
+/** Union of demo categories (code) + DB categories so filters cover both lists. */
+function mergeStorefrontCategories(dbRows: InventoryCategory[]): StorefrontCategory[] {
+  const bySlug = new Map<string, StorefrontCategory>();
+  for (const c of staticCategories) {
+    bySlug.set(c.id, { id: c.id, name: c.name, icon: c.icon });
   }
-  const supabase = getSupabase();
-  const { data, error } = await supabase.from("categories").select("*").order("name");
-  if (error) {
-    throw new CustomException(error.message, error);
+  for (const row of dbRows) {
+    const slug = row.slug;
+    const prev = bySlug.get(slug);
+    if (prev) {
+      bySlug.set(slug, { id: slug, name: row.name, icon: prev.icon });
+    } else {
+      bySlug.set(slug, { id: slug, name: row.name, icon: iconForSlug(slug) });
+    }
   }
-  const rows = (data ?? []) as InventoryCategory[];
-  return rows.map((c) => ({
-    id: c.slug,
-    name: c.name,
-    icon: iconForSlug(c.slug),
-  }));
+  return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function fetchCatalogProducts(): Promise<StorefrontProduct[]> {
-  if (!isSupabaseConfigured()) {
-    return staticProducts.map(staticProductToStorefront);
-  }
+async function loadDbStorefrontProducts(order: { column: string; ascending: boolean }): Promise<StorefrontProduct[]> {
   const supabase = getSupabase();
   const { data: productRows, error: productsError } = await supabase
     .from("inventory_products")
     .select("*")
-    .order("name");
+    .order(order.column, { ascending: order.ascending });
   if (productsError) {
     throw new CustomException(productsError.message, productsError);
   }
@@ -124,10 +122,34 @@ export async function fetchCatalogProducts(): Promise<StorefrontProduct[]> {
   );
 }
 
-export async function fetchCatalogProductById(id: string): Promise<StorefrontProduct | null> {
+export async function fetchCatalogCategories(): Promise<StorefrontCategory[]> {
   if (!isSupabaseConfigured()) {
-    const p = staticProducts.find((x) => x.id === id);
-    return p ? staticProductToStorefront(p) : null;
+    return staticCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
+  }
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from("categories").select("*").order("name");
+  if (error) {
+    throw new CustomException(error.message, error);
+  }
+  return mergeStorefrontCategories((data ?? []) as InventoryCategory[]);
+}
+
+export async function fetchCatalogProducts(): Promise<StorefrontProduct[]> {
+  const fromStatic = staticProducts.map(staticProductToStorefront);
+  if (!isSupabaseConfigured()) {
+    return fromStatic;
+  }
+  const fromDb = await loadDbStorefrontProducts({ column: "name", ascending: true });
+  return [...fromStatic, ...fromDb];
+}
+
+export async function fetchCatalogProductById(id: string): Promise<StorefrontProduct | null> {
+  const fromStatic = staticProducts.find((x) => x.id === id);
+  if (fromStatic) {
+    return staticProductToStorefront(fromStatic);
+  }
+  if (!isSupabaseConfigured()) {
+    return null;
   }
   const supabase = getSupabase();
   const { data: row, error } = await supabase
@@ -154,18 +176,26 @@ export async function fetchCatalogProductById(id: string): Promise<StorefrontPro
 }
 
 export async function fetchFeaturedCatalogProducts(limit = 8): Promise<StorefrontProduct[]> {
+  const staticFeatured = staticProducts
+    .filter((p) => p.featured)
+    .map(staticProductToStorefront)
+    .slice(0, limit);
+
   if (!isSupabaseConfigured()) {
-    return staticProducts
-      .filter((p) => p.featured)
-      .slice(0, limit)
-      .map(staticProductToStorefront);
+    return staticFeatured;
   }
+
+  const remaining = limit - staticFeatured.length;
+  if (remaining <= 0) {
+    return staticFeatured;
+  }
+
   const supabase = getSupabase();
   const { data: productRows, error: productsError } = await supabase
     .from("inventory_products")
     .select("*")
     .order("updated_at", { ascending: false })
-    .limit(limit);
+    .limit(remaining);
   if (productsError) {
     throw new CustomException(productsError.message, productsError);
   }
@@ -174,7 +204,8 @@ export async function fetchFeaturedCatalogProducts(limit = 8): Promise<Storefron
     throw new CustomException(categoriesError.message, categoriesError);
   }
   const catById = new Map((catRows as InventoryCategory[]).map((c) => [c.id, c]));
-  return (productRows as InventoryProduct[]).map((p) =>
+  const fromDb = (productRows as InventoryProduct[]).map((p) =>
     inventoryToStorefront(p, catById.get(p.category_id)),
   );
+  return [...staticFeatured, ...fromDb];
 }
