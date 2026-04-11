@@ -1,19 +1,80 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageCircle, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, MessageCircle, Check, ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ProductCard } from "@/components/ProductCard";
-import { getProductById, products, formatPrice, categories } from "@/data/products";
+import {
+  fetchCatalogCategories,
+  fetchCatalogProductById,
+  fetchCatalogProducts,
+} from "@/lib/catalog";
+import { formatPrice } from "@/lib/formatPrice";
+import { toCustomException } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+const CATALOG_STALE_MS = 30_000;
+
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const product = getProductById(id || "");
+
+  const {
+    data: product,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["catalog_product", id],
+    queryFn: () => fetchCatalogProductById(id || ""),
+    enabled: Boolean(id),
+    staleTime: CATALOG_STALE_MS,
+  });
+
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["catalog_products"],
+    queryFn: fetchCatalogProducts,
+    staleTime: CATALOG_STALE_MS,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["catalog_categories"],
+    queryFn: fetchCatalogCategories,
+    staleTime: CATALOG_STALE_MS,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="flex min-h-[60vh] items-center justify-center gap-2 pt-20 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+          <span>Loading product…</span>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (isError) {
+    const ex = toCustomException(error, "Could not load product");
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="flex min-h-[60vh] flex-col items-center justify-center gap-4 pt-20 px-4 text-center">
+          <p className="text-destructive">{ex.message}</p>
+          <Button asChild variant="outline">
+            <Link to="/products">Browse all products</Link>
+          </Button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -22,7 +83,7 @@ const ProductDetail = () => {
         <main className="flex min-h-[60vh] items-center justify-center pt-20">
           <div className="text-center">
             <h1 className="mb-4 font-display text-2xl font-bold">Product Not Found</h1>
-            <p className="mb-6 text-muted-foreground">The product you're looking for doesn't exist.</p>
+            <p className="mb-6 text-muted-foreground">The product you&apos;re looking for doesn&apos;t exist.</p>
             <Button asChild>
               <Link to="/products">Browse All Products</Link>
             </Button>
@@ -38,28 +99,31 @@ const ProductDetail = () => {
     window.open(`https://wa.me/923342914563?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const categoryInfo = categories.find(c => c.id === product.category);
-  
-  // Get related products from the same category
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
+  const categoryInfo = categories.find((c) => c.id === product.category);
+
+  const relatedProducts = allProducts
+    .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-20 md:pt-24">
         {/* Breadcrumb */}
         <section className="border-b border-border bg-secondary/30">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link to="/" className="transition-colors hover:text-foreground">Home</Link>
+              <Link to="/" className="transition-colors hover:text-foreground">
+                Home
+              </Link>
               <span>/</span>
-              <Link to="/products" className="transition-colors hover:text-foreground">Products</Link>
+              <Link to="/products" className="transition-colors hover:text-foreground">
+                Products
+              </Link>
               <span>/</span>
-              <Link 
-                to={`/products?category=${product.category}`} 
+              <Link
+                to={`/products?category=${product.category}`}
                 className="transition-colors hover:text-foreground"
               >
                 {categoryInfo?.name || product.category}
@@ -95,15 +159,23 @@ const ProductDetail = () => {
                     </div>
                   )}
                   <div className="flex aspect-square items-center justify-center p-12">
-                    <motion.div
-                      className="text-center"
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <span className="font-display text-5xl font-bold text-primary/30 md:text-6xl">
-                        {product.model}
-                      </span>
-                    </motion.div>
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <motion.div
+                        className="text-center"
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <span className="font-display text-5xl font-bold text-primary/30 md:text-6xl">
+                          {product.model}
+                        </span>
+                      </motion.div>
+                    )}
                   </div>
                 </motion.div>
               </div>
@@ -115,40 +187,28 @@ const ProductDetail = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
                 >
-                  {/* Category */}
-                  <Link 
+                  <Link
                     to={`/products?category=${product.category}`}
                     className="mb-3 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-primary hover:underline"
                   >
                     {categoryInfo?.icon} {categoryInfo?.name}
                   </Link>
 
-                  {/* Model */}
-                  <p className="mb-2 text-sm font-medium text-muted-foreground">
-                    Model: {product.model}
-                  </p>
+                  <p className="mb-2 text-sm font-medium text-muted-foreground">Model: {product.model}</p>
 
-                  {/* Name */}
-                  <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">
-                    {product.name}
-                  </h1>
+                  <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">{product.name}</h1>
 
-                  {/* Price */}
                   <div className="mb-6">
                     <span className="font-display text-4xl font-bold text-primary md:text-5xl">
                       {formatPrice(product.price)}
                     </span>
                   </div>
 
-                  {/* Description */}
-                  <p className="mb-8 text-lg text-muted-foreground">
-                    {product.description}
-                  </p>
+                  <p className="mb-8 text-lg text-muted-foreground">{product.description}</p>
 
-                  {/* CTA Buttons */}
                   <div className="mb-8 flex flex-wrap gap-4">
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       onClick={handleWhatsApp}
                       className="bg-[#25D366] text-white hover:bg-[#128C7E] gap-2"
                     >
@@ -156,14 +216,10 @@ const ProductDetail = () => {
                       Inquire on WhatsApp
                     </Button>
                     {product.webLink && (
-                      <Button 
-                        size="lg" 
-                        variant="outline"
-                        asChild
-                      >
-                        <a 
-                          href={`https://${product.webLink}`} 
-                          target="_blank" 
+                      <Button size="lg" variant="outline" asChild>
+                        <a
+                          href={`https://${product.webLink}`}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="gap-2"
                         >
@@ -176,31 +232,37 @@ const ProductDetail = () => {
 
                   <Separator className="mb-8" />
 
-                  {/* Features */}
-                  <div>
-                    <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Features & Specifications</h3>
-                    <ul className="grid gap-3 sm:grid-cols-2">
-                      {product.features.map((feature, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-                          className="flex items-start gap-2 text-sm text-muted-foreground"
-                        >
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <span>{feature}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
+                  {product.features.length > 0 ? (
+                    <div>
+                      <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
+                        Features & Specifications
+                      </h3>
+                      <ul className="grid gap-3 sm:grid-cols-2">
+                        {product.features.map((feature, index) => (
+                          <motion.li
+                            key={index}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+                            className="flex items-start gap-2 text-sm text-muted-foreground"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                            <span>{feature}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      For full specifications, message us on WhatsApp — we&apos;re happy to help.
+                    </p>
+                  )}
                 </motion.div>
               </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="border-t border-border bg-secondary/20 py-16 md:py-20">
             <div className="container mx-auto px-4">
@@ -215,11 +277,7 @@ const ProductDetail = () => {
                 </h2>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {relatedProducts.map((relatedProduct, index) => (
-                    <ProductCard 
-                      key={relatedProduct.id} 
-                      product={relatedProduct} 
-                      index={index}
-                    />
+                    <ProductCard key={relatedProduct.id} product={relatedProduct} index={index} />
                   ))}
                 </div>
               </motion.div>
@@ -227,14 +285,9 @@ const ProductDetail = () => {
           </section>
         )}
 
-        {/* Back Button */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate(-1)}
-              className="gap-2"
-            >
+            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Products
             </Button>

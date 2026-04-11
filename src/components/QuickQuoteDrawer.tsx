@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Product } from "@/data/products";
+import type { StorefrontProduct } from "@/lib/catalog";
 
 const WHATSAPP_NUMBER = "923342914563";
 
@@ -42,7 +42,7 @@ const quickQuoteSchema = z.object({
 
 type QuickQuoteForm = z.infer<typeof quickQuoteSchema>;
 
-function buildWhatsAppMessage(product: Product, form: QuickQuoteForm) {
+function buildWhatsAppMessage(product: StorefrontProduct, form: QuickQuoteForm) {
   const lines: string[] = [];
   lines.push("Quick Quote Request");
   lines.push("");
@@ -68,7 +68,7 @@ export function QuickQuoteDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product: Product | null;
+  product: StorefrontProduct | null;
 }) {
   const [form, setForm] = useState<QuickQuoteForm>({ name: "", city: "", notes: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof QuickQuoteForm, string>>>({});

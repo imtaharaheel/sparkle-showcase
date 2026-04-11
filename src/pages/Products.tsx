@@ -1,30 +1,54 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion, useInView } from "framer-motion";
-import { Search, X, Sparkles } from "lucide-react";
+import { Loader2, Search, X, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { ProductCard } from "@/components/ProductCard";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 import { QuickQuoteDrawer } from "@/components/QuickQuoteDrawer";
-import { products, categories, type Product } from "@/data/products";
+import {
+  fetchCatalogCategories,
+  fetchCatalogProducts,
+  type StorefrontProduct,
+} from "@/lib/catalog";
+import { toCustomException } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+const CATALOG_STALE_MS = 30_000;
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [quoteDrawerOpen, setQuoteDrawerOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<StorefrontProduct | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const isHeaderInView = useInView(headerRef, { once: true });
+
+  const { data: products = [], isLoading: productsLoading, isError: productsError, error: productsErr } =
+    useQuery({
+      queryKey: ["catalog_products"],
+      queryFn: fetchCatalogProducts,
+      staleTime: CATALOG_STALE_MS,
+    });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ["catalog_categories"],
+    queryFn: fetchCatalogCategories,
+    staleTime: CATALOG_STALE_MS,
+  });
+
+  const catalogError = productsError ? toCustomException(productsErr, "Could not load products") : null;
+  const isLoading = productsLoading || categoriesLoading;
   
   const selectedCategory = searchParams.get("category") || "all";
 
   const filteredProducts = useMemo(() => {
-    let result = products;
+    let result = [...products];
     
     // Filter by category
     if (selectedCategory !== "all") {
@@ -60,7 +84,7 @@ const Products = () => {
     setSearchParams(searchParams);
   };
 
-  const handleOpenQuote = useCallback((product: Product) => {
+  const handleOpenQuote = useCallback((product: StorefrontProduct) => {
     setSelectedProduct(product);
     setQuoteDrawerOpen(true);
   }, []);
@@ -204,7 +228,17 @@ const Products = () => {
         {/* Products Grid */}
         <section className="py-12 md:py-16 bg-[#08080c]">
           <div className="container mx-auto px-4">
-            {filteredProducts.length > 0 ? (
+            {catalogError ? (
+              <div className="py-20 text-center">
+                <p className="text-destructive">{catalogError.message}</p>
+                <p className="mt-2 text-sm text-gray-500">Check your connection and Supabase settings, then refresh.</p>
+              </div>
+            ) : isLoading ? (
+              <div className="flex min-h-[40vh] items-center justify-center gap-2 text-gray-400">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+                <span>Loading products…</span>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <>
                 <motion.p 
                   className="mb-6 text-sm text-gray-500"

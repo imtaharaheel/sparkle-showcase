@@ -1,12 +1,21 @@
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { featuredProducts } from "@/data/products";
+import { fetchFeaturedCatalogProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "./AnimatedBackground";
 
+const CATALOG_STALE_MS = 30_000;
+
 export const FeaturedProducts = () => {
+  const { data: featuredProducts = [], isLoading, isError } = useQuery({
+    queryKey: ["catalog_featured"],
+    queryFn: () => fetchFeaturedCatalogProducts(8),
+    staleTime: CATALOG_STALE_MS,
+  });
+
   return (
     <section className="relative py-20 md:py-32">
       <AnimatedBackground variant="featured" />
@@ -32,11 +41,26 @@ export const FeaturedProducts = () => {
         </motion.div>
 
         {/* Products Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featuredProducts.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex min-h-[200px] items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+            <span>Loading featured products…</span>
+          </div>
+        ) : isError ? (
+          <p className="text-center text-sm text-muted-foreground">
+            Featured products couldn&apos;t load. Open the full catalog from the link below.
+          </p>
+        ) : featuredProducts.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">
+            New arrivals are on the way. Browse the full catalog for what&apos;s in stock.
+          </p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featuredProducts.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
+            ))}
+          </div>
+        )}
 
         {/* View All Button */}
         <motion.div

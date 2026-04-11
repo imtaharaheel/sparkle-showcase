@@ -246,6 +246,9 @@ export default function AdminProducts() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["inventory_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_featured"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_product"] });
       toast.success(editing ? "Product updated" : "Product created");
       setDialogOpen(false);
       setEditing(null);
@@ -276,6 +279,9 @@ export default function AdminProducts() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["inventory_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_featured"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_product"] });
       toast.success("Product deleted");
       setDeleteTarget(null);
     },

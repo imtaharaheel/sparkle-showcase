@@ -1,15 +1,16 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
-import { Product, formatPrice } from "@/data/products";
+import type { StorefrontProduct } from "@/lib/catalog";
+import { formatPrice } from "@/lib/formatPrice";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 interface ProductCardProps {
-  product: Product;
+  product: StorefrontProduct;
   index?: number;
-  onQuickQuote?: (product: Product) => void;
+  onQuickQuote?: (product: StorefrontProduct) => void;
 }
 
 export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardProps) => {
@@ -82,7 +83,7 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
               className="flex h-full w-full items-center justify-center"
               style={{ transform: "translateZ(30px)" }}
             >
-              {product.image && product.image !== `/products/${product.id}.png` ? (
+              {product.image ? (
                 <img 
                   src={product.image} 
                   alt={product.name}

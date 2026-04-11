@@ -742,5 +742,4 @@ export const getProductsByCategory = (category: string) =>
 export const getProductById = (id: string) => 
   products.find(p => p.id === id);
 
-export const formatPrice = (price: number) => 
-  `Rs. ${price.toLocaleString('en-PK')}`;
+export { formatPrice } from "@/lib/formatPrice";
