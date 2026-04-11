@@ -1,0 +1,2 @@
+# If this file exists, GitHub Actions builds with VITE_BASE=/ (assets at domain root).
+# For https://user.github.io/repo-name/ only, delete this file (or set repo Variable VITE_BASE).
