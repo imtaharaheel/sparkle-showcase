@@ -1,8 +1,9 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getSupabase } from "@/lib/supabase";
 import { CustomException } from "@/lib/errors";
-import type { InventoryProduct } from "@/types/inventory";
+import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
 import { getStockStatus } from "@/types/inventory";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,12 +14,27 @@ import { Badge } from "@/components/ui/badge";
 
 async function fetchProducts(): Promise<InventoryProduct[]> {
   const supabase = getSupabase();
-  const { data, error } = await supabase.from("inventory_products").select("*").order("name");
+  const { data, error } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
   if (error) {
     throw new CustomException(error.message, error);
   }
   return (data ?? []) as InventoryProduct[];
 }
+
+async function fetchCategories(): Promise<InventoryCategory[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from("categories").select("*").order("name");
+  if (error) {
+    throw new CustomException(error.message, error);
+  }
+  return (data ?? []) as InventoryCategory[];
+}
+
+const RECENT_UPLOADS_LIMIT = 15;
 
 export default function AdminDashboard() {
   const { data: products = [], isLoading, isError, error } = useQuery({
@@ -26,8 +42,22 @@ export default function AdminDashboard() {
     queryFn: fetchProducts,
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["inventory_categories"],
+    queryFn: fetchCategories,
+  });
+
+  const categoryNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of categories) {
+      m.set(c.id, c.name);
+    }
+    return m;
+  }, [categories]);
+
   const total = products.length;
   const lowStock = products.filter((p) => p.stock_quantity > 0 && p.stock_quantity < 5);
+  const recentUploads = products.slice(0, RECENT_UPLOADS_LIMIT);
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading dashboard…</p>;
@@ -79,6 +109,44 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent uploads</CardTitle>
+          <CardDescription>Newest products first (same order as the public catalog).</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {recentUploads.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No products yet. Add some under Products.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Added</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentUploads.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {categoryNameById.get(p.category_id) ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground text-sm tabular-nums">
+                      {new Date(p.created_at).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

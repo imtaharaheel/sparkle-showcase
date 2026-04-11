@@ -134,12 +134,15 @@ function mergeStorefrontCategories(dbRows: InventoryCategory[]): StorefrontCateg
   return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function loadDbStorefrontProducts(order: { column: string; ascending: boolean }): Promise<StorefrontProduct[]> {
+async function loadDbStorefrontProducts(
+  ...orders: { column: string; ascending: boolean }[]
+): Promise<StorefrontProduct[]> {
   const supabase = getSupabase();
-  const { data: productRows, error: productsError } = await supabase
-    .from("inventory_products")
-    .select("*")
-    .order(order.column, { ascending: order.ascending });
+  let query = supabase.from("inventory_products").select("*");
+  for (const o of orders) {
+    query = query.order(o.column, { ascending: o.ascending });
+  }
+  const { data: productRows, error: productsError } = await query;
   if (productsError) {
     throw new CustomException(productsError.message, productsError);
   }
@@ -170,7 +173,10 @@ export async function fetchCatalogProducts(): Promise<StorefrontProduct[]> {
   if (!isSupabaseConfigured()) {
     return fromStatic;
   }
-  const fromDb = await loadDbStorefrontProducts({ column: "name", ascending: true });
+  const fromDb = await loadDbStorefrontProducts(
+    { column: "created_at", ascending: false },
+    { column: "id", ascending: false },
+  );
   return [...fromStatic, ...fromDb];
 }
 

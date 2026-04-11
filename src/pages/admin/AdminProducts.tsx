@@ -110,11 +110,15 @@ const productFormSchema = z
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
-type SortKey = "name" | "price_asc" | "price_desc" | "stock_asc" | "stock_desc";
+type SortKey = "newest" | "name" | "price_asc" | "price_desc" | "stock_asc" | "stock_desc";
 
 async function fetchProducts(): Promise<InventoryProduct[]> {
   const supabase = getSupabase();
-  const { data, error } = await supabase.from("inventory_products").select("*");
+  const { data, error } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
   if (error) {
     throw new CustomException(error.message, error);
   }
@@ -145,7 +149,7 @@ export default function AdminProducts() {
   const { user } = useAdminAuth();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -179,6 +183,12 @@ export default function AdminProducts() {
       list = list.filter((p) => p.category_id === categoryFilter);
     }
     switch (sortKey) {
+      case "newest":
+        list.sort((a, b) => {
+          const t = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return t !== 0 ? t : b.id.localeCompare(a.id);
+        });
+        break;
       case "price_asc":
         list.sort((a, b) => Number(a.price) - Number(b.price));
         break;
@@ -402,6 +412,7 @@ export default function AdminProducts() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
               <SelectItem value="name">Name (A–Z)</SelectItem>
               <SelectItem value="price_asc">Price (low → high)</SelectItem>
               <SelectItem value="price_desc">Price (high → low)</SelectItem>
