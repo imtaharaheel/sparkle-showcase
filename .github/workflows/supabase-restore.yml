@@ -1,31 +1,17 @@
-# Applies supabase/migrations to the linked Supabase project.
-# Secrets: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD (DB password from Project Settings → Database).
-name: Supabase database
+# Restores a paused Supabase project and configures auth redirect URLs.
+# Secrets: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF
+name: Restore Supabase
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/**"
-      - ".github/workflows/supabase-db.yml"
   workflow_dispatch:
 
 jobs:
-  push:
+  restore:
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
-      - run: npm ci
-
       - name: Restore Supabase project if paused
         run: |
           set -euo pipefail
@@ -49,7 +35,7 @@ jobs:
               break
             fi
             if [ "$attempt" -eq 36 ]; then
-              echo "WARNING: Supabase auth still not healthy after waiting."
+              echo "ERROR: Supabase auth still not healthy after waiting."
               exit 1
             fi
             sleep 10
@@ -66,9 +52,3 @@ jobs:
               "uri_allow_list": "https://saimenterprise.com/admin/reset-password,http://localhost:8080/admin/reset-password"
             }'
           echo "Auth redirect URLs configured."
-
-      - name: Link project
-        run: npx supabase link --project-ref "${SUPABASE_PROJECT_REF}" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
-
-      - name: Push migrations
-        run: npx supabase db push

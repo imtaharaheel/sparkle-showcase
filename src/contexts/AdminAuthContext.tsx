@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { buildAdminAuthUrl } from "@/lib/adminAuthUrl";
-import { CustomException, toCustomException } from "@/lib/errors";
+import { CustomException, toAuthCustomException, toCustomException } from "@/lib/errors";
 
 type AdminAuthContextValue = {
   configured: boolean;
@@ -167,11 +167,15 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       throw new CustomException("Supabase is not configured.");
     }
     const supabase = getSupabase();
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: buildAdminAuthUrl("/admin/reset-password"),
-    });
-    if (error) {
-      throw new CustomException(error.message, error);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: buildAdminAuthUrl("/admin/reset-password"),
+      });
+      if (error) {
+        throw new CustomException(error.message, error);
+      }
+    } catch (err) {
+      throw toAuthCustomException(err, "Failed to send reset email");
     }
   }, [configured]);
 
