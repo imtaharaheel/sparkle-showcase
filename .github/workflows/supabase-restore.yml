@@ -30,7 +30,7 @@ jobs:
             STATUS=$(curl -sS "${AUTH[@]}" "$API" | jq -r '.status // "unknown"')
             HEALTH=$(curl -sS -o /dev/null -w "%{http_code}" "https://${SUPABASE_PROJECT_REF}.supabase.co/auth/v1/health" || true)
             echo "Attempt ${attempt}: status=${STATUS}, auth_health=${HEALTH}"
-            if [ "$HEALTH" = "200" ] || [ "$HEALTH" = "204" ]; then
+            if [ "$HEALTH" = "200" ] || [ "$HEALTH" = "204" ] || [ "$HEALTH" = "401" ]; then
               echo "Supabase auth is reachable."
               break
             fi
