@@ -13,6 +13,8 @@ import CorporateOrders from "./pages/CorporateOrders";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
+import ForgotPassword from "./pages/admin/ForgotPassword";
+import ResetPassword from "./pages/admin/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/corporate-orders" element={<CorporateOrders />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+            <Route path="/admin/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<ProtectedAdmin />}>
               <Route element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />

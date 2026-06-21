@@ -136,6 +136,14 @@ export default function AdminLogin() {
                   </FormItem>
                 )}
               />
+              <div className="flex justify-end -mt-2">
+                <Link
+                  to="/admin/forgot-password"
+                  className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
               </Button>
