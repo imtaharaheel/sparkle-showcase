@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "docs/**"
   workflow_dispatch:
 
 permissions:
   contents: write
   pages: write
   id-token: write
-  administration: write
 
 concurrency:
   group: "pages"
@@ -19,8 +20,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      pages_mode: ${{ steps.pages_config.outputs.mode }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,124 +69,72 @@ jobs:
           cp public/.nojekyll dist/.nojekyll 2>/dev/null || touch dist/.nojekyll
           cp public/CNAME dist/CNAME 2>/dev/null || true
 
-      - name: Publish built site to gh-pages branch
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: dist
-          branch: gh-pages
-          clean: true
-          single-commit: true
+      - name: Sync built site into docs/ for GitHub Pages
+        run: |
+          rm -rf docs
+          mkdir -p docs
+          cp -a dist/. docs/
 
-      - name: Configure GitHub Pages source
-        id: pages_config
+      - name: Commit and push docs/ to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --staged --quiet; then
+            echo "docs/ unchanged — nothing to publish"
+            exit 0
+          fi
+          git commit -m "Deploy production site to docs/ [skip ci]"
+          git push
+
+      - name: Point GitHub Pages at main/docs (production build)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          REPO="${{ github.repository }}"
-          API="https://api.github.com/repos/${REPO}/pages"
-          AUTH=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28")
+          API="https://api.github.com/repos/${{ github.repository }}/pages"
+          BODY='{"build_type":"legacy","source":{"branch":"main","path":"/docs"}}'
 
           http_code() { printf '%s' "$1" | tail -n1; }
           http_body() { printf '%s' "$1" | sed '$d'; }
 
           request() {
-            curl -sS -X "$1" "${AUTH[@]}" -H "Content-Type: application/json" -d "$2" -w "\n%{http_code}" "$3"
+            curl -sS -X "$1" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              -d "$2" \
+              -w "\n%{http_code}" \
+              "$3"
           }
 
-          try_legacy() {
-            local BODY='{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}'
-            echo "Trying gh-pages branch as Pages source..."
-            local RESP
-            RESP=$(request PUT "$BODY" "$API")
-            local CODE
-            CODE=$(http_code "$RESP")
-            echo "PUT /pages (legacy gh-pages) -> HTTP ${CODE}"
-            http_body "$RESP" || true
+          echo "Setting GitHub Pages source to main branch /docs ..."
+          RESP=$(request PUT "$BODY" "$API")
+          CODE=$(http_code "$RESP")
+          echo "PUT /pages -> HTTP ${CODE}"
+          http_body "$RESP" || true
 
-            if [ "$CODE" = "200" ] || [ "$CODE" = "204" ]; then
-              echo "mode=legacy" >> "$GITHUB_OUTPUT"
-              return 0
-            fi
-
-            if [ "$CODE" = "404" ]; then
-              echo "Pages site not found; creating with gh-pages source..."
-              RESP=$(request POST "$BODY" "$API")
-              CODE=$(http_code "$RESP")
-              echo "POST /pages (legacy gh-pages) -> HTTP ${CODE}"
-              http_body "$RESP" || true
-              if [ "$CODE" = "201" ] || [ "$CODE" = "200" ]; then
-                echo "mode=legacy" >> "$GITHUB_OUTPUT"
-                return 0
-              fi
-            fi
-            return 1
-          }
-
-          try_workflow() {
-            local BODY='{"build_type":"workflow"}'
-            echo "Trying GitHub Actions as Pages source..."
-            local RESP
-            RESP=$(request PUT "$BODY" "$API")
-            local CODE
-            CODE=$(http_code "$RESP")
-            echo "PUT /pages (workflow) -> HTTP ${CODE}"
-            http_body "$RESP" || true
-
-            if [ "$CODE" = "200" ] || [ "$CODE" = "204" ]; then
-              echo "mode=workflow" >> "$GITHUB_OUTPUT"
-              return 0
-            fi
-
-            if [ "$CODE" = "404" ]; then
-              local CREATE='{"build_type":"workflow","source":{"branch":"main","path":"/"}}'
-              RESP=$(request POST "$CREATE" "$API")
-              CODE=$(http_code "$RESP")
-              echo "POST /pages (workflow) -> HTTP ${CODE}"
-              http_body "$RESP" || true
-              if [ "$CODE" = "201" ] || [ "$CODE" = "200" ]; then
-                echo "mode=workflow" >> "$GITHUB_OUTPUT"
-                return 0
-              fi
-            fi
-            return 1
-          }
-
-          if try_legacy; then
-            echo "GitHub Pages will serve the built site from gh-pages."
+          if [ "$CODE" = "200" ] || [ "$CODE" = "204" ]; then
+            echo "GitHub Pages now serves the built site from main/docs."
             exit 0
           fi
 
-          if try_workflow; then
-            echo "GitHub Pages will deploy via GitHub Actions."
+          if [ "$CODE" = "404" ]; then
+            echo "Creating GitHub Pages site with main/docs source..."
+            RESP=$(request POST "$BODY" "$API")
+            CODE=$(http_code "$RESP")
+            echo "POST /pages -> HTTP ${CODE}"
+            http_body "$RESP" || true
+            if [ "$CODE" = "201" ] || [ "$CODE" = "200" ]; then
+              exit 0
+            fi
+          fi
+
+          if [ "$CODE" = "409" ]; then
+            echo "Pages source already configured — continuing."
             exit 0
           fi
 
-          echo "ERROR: Could not configure GitHub Pages automatically."
-          echo "Set repo Settings -> Pages -> Source to branch gh-pages (root), then re-run this workflow."
-          exit 1
-
-      - name: Setup Pages
-        if: steps.pages_config.outputs.mode == 'workflow'
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        if: steps.pages_config.outputs.mode == 'workflow'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./dist"
-
-  deploy:
-    needs: build
-    if: needs.build.outputs.pages_mode == 'workflow'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          echo "WARNING: Could not auto-switch Pages to main/docs (HTTP ${CODE})."
+          echo "If the live site is still broken, set Settings -> Pages -> Branch main, folder /docs."
