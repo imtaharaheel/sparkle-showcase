@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { buildAdminAuthUrl } from "@/lib/adminAuthUrl";
 import { CustomException, toCustomException } from "@/lib/errors";
 
 type AdminAuthContextValue = {
@@ -12,6 +13,8 @@ type AdminAuthContextValue = {
   authError: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   refreshAdmin: () => Promise<void>;
 };
 
@@ -159,6 +162,30 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setIsAdmin(false);
   }, [configured]);
 
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!configured) {
+      throw new CustomException("Supabase is not configured.");
+    }
+    const supabase = getSupabase();
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: buildAdminAuthUrl("/admin/reset-password"),
+    });
+    if (error) {
+      throw new CustomException(error.message, error);
+    }
+  }, [configured]);
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!configured) {
+      throw new CustomException("Supabase is not configured.");
+    }
+    const supabase = getSupabase();
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      throw new CustomException(error.message, error);
+    }
+  }, [configured]);
+
   const value = useMemo<AdminAuthContextValue>(
     () => ({
       configured,
@@ -169,9 +196,23 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       authError,
       signIn,
       signOut,
+      requestPasswordReset,
+      updatePassword,
       refreshAdmin,
     }),
-    [configured, session, user, isAdmin, loading, authError, signIn, signOut, refreshAdmin],
+    [
+      configured,
+      session,
+      user,
+      isAdmin,
+      loading,
+      authError,
+      signIn,
+      signOut,
+      requestPasswordReset,
+      updatePassword,
+      refreshAdmin,
+    ],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

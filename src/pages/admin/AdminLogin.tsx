@@ -136,10 +136,10 @@ export default function AdminLogin() {
                   </FormItem>
                 )}
               />
-              <div className="flex justify-end -mt-2">
+              <div className="-mt-2 flex justify-end">
                 <Link
                   to="/admin/forgot-password"
-                  className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                  className="text-muted-foreground text-sm underline underline-offset-4 hover:text-foreground"
                 >
                   Forgot password?
                 </Link>
