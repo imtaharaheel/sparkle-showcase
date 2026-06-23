@@ -32,7 +32,7 @@ function ThumbnailButton({
       className={cn(
         "shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition-colors",
         "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]",
-        selected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50",
+        selected ? "border-primary ring-2 ring-inset ring-primary/30" : "border-border hover:border-primary/50",
       )}
       aria-label={`View image ${index + 1} of ${total}`}
       aria-current={selected ? "true" : undefined}
@@ -109,9 +109,9 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
 
             <div
               ref={thumbStripRef}
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
+              className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-width:thin] [scrollbar-color:hsl(var(--border))_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex w-full flex-col gap-2">
                 {images.map((src, index) => (
                   <ThumbnailButton
                     key={`desktop-${src}-${index}`}
