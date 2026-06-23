@@ -13,6 +13,8 @@ export interface InventoryProduct {
   stock_quantity: number;
   category_id: string;
   image_path: string | null;
+  /** Additional local paths for product detail gallery (includes primary when set). */
+  gallery_image_paths?: string[] | null;
   created_at: string;
   updated_at: string;
   /** Stable id for URLs when migrating from the old demo catalog (e.g. mk14-black). */

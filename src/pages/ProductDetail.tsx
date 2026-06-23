@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductImageGallery } from "@/components/ProductImageGallery";
 import {
   fetchCatalogCategories,
   fetchCatalogProductById,
@@ -15,7 +16,6 @@ import {
 import { formatPrice } from "@/lib/formatPrice";
 import { toCustomException } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 const CATALOG_STALE_MS = 30_000;
@@ -154,44 +154,13 @@ const ProductDetail = () => {
               transition={{ duration: 0.5 }}
               className="grid gap-12 lg:grid-cols-2"
             >
-              {/* Product Image */}
-              <div className="relative">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="sticky top-28 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-secondary to-accent/20 shadow-lg"
-                >
-                  {product.badge && (
-                    <div className="absolute top-4 left-4 z-10">
-                      <Badge className="gradient-brand text-primary-foreground font-semibold text-sm px-3 py-1">
-                        {product.badge}
-                      </Badge>
-                    </div>
-                  )}
-                  <div className="flex aspect-square items-center justify-center bg-white p-6 sm:p-10">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        loading="eager"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    ) : (
-                      <motion.div
-                        className="text-center"
-                        animate={{ y: [0, -5, 0] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <span className="font-display text-5xl font-bold text-primary/30 md:text-6xl">
-                          {product.model}
-                        </span>
-                      </motion.div>
-                    )}
-                  </div>
-                </motion.div>
+              {/* Product Image Gallery */}
+              <div className="relative lg:sticky lg:top-28 lg:self-start">
+                <ProductImageGallery
+                  images={product.images.length > 0 ? product.images : product.image ? [product.image] : []}
+                  alt={product.name}
+                  badge={product.badge}
+                />
               </div>
 
               {/* Product Info */}

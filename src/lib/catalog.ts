@@ -20,6 +20,8 @@ export interface StorefrontProduct {
   price: number;
   /** Resolved public URL, or "" when missing / misconfigured. */
   image: string;
+  /** All gallery URLs for product detail (primary first). */
+  images: string[];
   /** Category slug for filters and links. */
   category: string;
   badge?: string;
@@ -79,13 +81,24 @@ function splitDescriptionForStorefront(
   return { model: fallbackModel, description: text.trim(), webLink: web };
 }
 
+function resolveStorefrontImages(
+  imagePath: string | null,
+  galleryPaths: string[] | null | undefined,
+): string[] {
+  const paths =
+    galleryPaths && galleryPaths.length > 0 ? galleryPaths : imagePath ? [imagePath] : [];
+  return paths
+    .map((path) => getPublicImageUrl(path))
+    .filter((url): url is string => Boolean(url));
+}
+
 function inventoryToStorefront(
   p: InventoryProduct,
   cat: InventoryCategory | undefined,
 ): StorefrontProduct {
   const fallbackModel = inventoryModelLabel(p);
   const parsed = splitDescriptionForStorefront(p.description, fallbackModel);
-  const url = getPublicImageUrl(p.image_path);
+  const images = resolveStorefrontImages(p.image_path, p.gallery_image_paths);
   const listingBadge = p.listing_badge?.trim();
   return {
     id: p.legacy_demo_id?.trim() || p.id,
@@ -93,7 +106,8 @@ function inventoryToStorefront(
     name: p.name,
     description: parsed.description,
     price: Number(p.price),
-    image: url ?? "",
+    image: images[0] ?? "",
+    images,
     category: cat?.slug ?? "accessory",
     features: [],
     webLink: parsed.webLink,
@@ -104,6 +118,7 @@ function inventoryToStorefront(
 }
 
 function staticProductToStorefront(p: Product): StorefrontProduct {
+  const images = p.image ? [p.image] : [];
   return {
     id: p.id,
     model: p.model,
@@ -111,6 +126,7 @@ function staticProductToStorefront(p: Product): StorefrontProduct {
     description: p.description,
     price: p.price,
     image: p.image,
+    images,
     category: p.category,
     features: [...p.features],
     badge: p.badge,
