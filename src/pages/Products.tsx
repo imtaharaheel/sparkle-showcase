@@ -179,36 +179,34 @@ const Products = () => {
 
         {/* Filters */}
         <section className="sticky top-16 z-30 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-lg md:top-20">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                {/* Search */}
-                <div className="relative flex-1 sm:max-w-sm">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <Input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
-                  />
-                </div>
+          <div className="container mx-auto space-y-4 px-4 py-4">
+            {/* Search — full width, easy to spot */}
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary/80" />
+              <Input
+                type="search"
+                placeholder="Search products by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-12 w-full rounded-xl border-white/20 bg-white/10 pl-12 text-base text-white shadow-sm placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/25 md:h-14 md:pl-14 md:text-lg"
+              />
+            </div>
 
-                {/* Sort */}
-                <Select value={sortKey} onValueChange={(v) => setSortKey(v as CatalogSortKey)}>
-                  <SelectTrigger className="w-full sm:w-56 bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest first</SelectItem>
-                    <SelectItem value="name">Name (A–Z)</SelectItem>
-                    <SelectItem value="price_asc">Price (low → high)</SelectItem>
-                    <SelectItem value="price_desc">Price (high → low)</SelectItem>
-                    <SelectItem value="stock_asc">Stock (low → high)</SelectItem>
-                    <SelectItem value="stock_desc">Stock (high → low)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Sort */}
+              <Select value={sortKey} onValueChange={(v) => setSortKey(v as CatalogSortKey)}>
+                <SelectTrigger className="h-11 w-full bg-white/5 border-white/10 text-white sm:w-56">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest first</SelectItem>
+                  <SelectItem value="name">Name (A–Z)</SelectItem>
+                  <SelectItem value="price_asc">Price (low → high)</SelectItem>
+                  <SelectItem value="price_desc">Price (high → low)</SelectItem>
+                  <SelectItem value="stock_asc">Stock (low → high)</SelectItem>
+                  <SelectItem value="stock_desc">Stock (high → low)</SelectItem>
+                </SelectContent>
+              </Select>
 
               {/* Category Filters */}
               <div className="flex flex-wrap items-center gap-2">
