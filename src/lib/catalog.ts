@@ -137,18 +137,21 @@ function staticProductToStorefront(p: Product): StorefrontProduct {
 
 /** Union of demo categories (code) + DB categories so filters cover both lists. */
 function mergeStorefrontCategories(dbRows: InventoryCategory[]): StorefrontCategory[] {
+  const visibleRows = dbRows
+    .filter((row) => row.is_visible !== false)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name));
+
+  if (visibleRows.length > 0) {
+    return visibleRows.map((row) => ({
+      id: row.slug,
+      name: row.name,
+      icon: row.icon?.trim() || iconForSlug(row.slug),
+    }));
+  }
+
   const bySlug = new Map<string, StorefrontCategory>();
   for (const c of staticCategories) {
     bySlug.set(c.id, { id: c.id, name: c.name, icon: c.icon });
-  }
-  for (const row of dbRows) {
-    const slug = row.slug;
-    const prev = bySlug.get(slug);
-    if (prev) {
-      bySlug.set(slug, { id: slug, name: row.name, icon: prev.icon });
-    } else {
-      bySlug.set(slug, { id: slug, name: row.name, icon: iconForSlug(slug) });
-    }
   }
   return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -180,7 +183,11 @@ export async function fetchCatalogCategories(): Promise<StorefrontCategory[]> {
     return staticCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
   }
   const supabase = getSupabase();
-  const { data, error } = await supabase.from("categories").select("*").order("name");
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order")
+    .order("name");
   if (error) {
     throw new CustomException(error.message, error);
   }

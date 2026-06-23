@@ -1,5 +1,5 @@
 import { Outlet, useMatch, useNavigate } from "react-router-dom";
-import { LayoutGrid, Package, LogOut } from "lucide-react";
+import { LayoutGrid, Package, LogOut, Tags } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function AdminLayout() {
   const { signOut } = useAdminAuth();
   const dashboardActive = !!useMatch({ path: "/admin", end: true });
   const productsActive = !!useMatch("/admin/products");
+  const categoriesActive = !!useMatch("/admin/categories");
 
   const handleSignOut = async () => {
     try {
@@ -67,6 +68,14 @@ export function AdminLayout() {
                     <NavLink to="/admin/products" className="flex items-center gap-2" activeClassName="font-medium">
                       <Package className="size-4" />
                       <span>Products</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={categoriesActive} tooltip="Categories">
+                    <NavLink to="/admin/categories" className="flex items-center gap-2" activeClassName="font-medium">
+                      <Tags className="size-4" />
+                      <span>Categories</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

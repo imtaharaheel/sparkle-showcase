@@ -44,17 +44,9 @@ export interface Product {
 export const products: Product[] = [];
 
 export const categories = [
-  { id: "keyboard", name: "Keyboards", icon: "⌨️" },
-  { id: "mouse", name: "Gaming Mice", icon: "🖱️" },
-  { id: "headset", name: "Headsets", icon: "🎧" },
-  { id: "combo", name: "Gaming Combos", icon: "🎮" },
-  { id: "speaker", name: "Speakers", icon: "🔊" },
-  { id: "microphone", name: "Microphones", icon: "🎤" },
-  { id: "ipad", name: "iPads", icon: "📱" },
-  { id: "apple-pencil", name: "Apple Pencil", icon: "✏️" },
-  { id: "ipad-accessories", name: "iPad Accessories", icon: "🔌" },
-  { id: "mac", name: "Mac", icon: "🖥️" },
+  { id: "accessory", name: "Accessory", icon: "🧩" },
   { id: "laptop", name: "Laptops", icon: "💻" },
+  { id: "apple-products", name: "Apple Products", icon: "🍎" },
 ] as const;
 
 export const featuredProducts = products.filter((p) => p.featured);

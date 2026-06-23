@@ -133,11 +133,21 @@ async function fetchProducts(): Promise<InventoryProduct[]> {
 
 async function fetchCategories(): Promise<InventoryCategory[]> {
   const supabase = getSupabase();
-  const { data, error } = await supabase.from("categories").select("*").order("name");
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order")
+    .order("name");
   if (error) {
     throw new CustomException(error.message, error);
   }
   return (data ?? []) as InventoryCategory[];
+}
+
+function sortCategories(list: InventoryCategory[]): InventoryCategory[] {
+  return [...list].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name),
+  );
 }
 
 function sanitizeFileName(name: string): string {
@@ -179,6 +189,11 @@ export default function AdminProducts() {
     }
     return m;
   }, [categories]);
+
+  const visibleCategories = useMemo(
+    () => sortCategories(categories.filter((c) => c.is_visible !== false)),
+    [categories],
+  );
 
   const productCountByCategory = useMemo(() => {
     const counts = new Map<string, number>();
@@ -254,7 +269,7 @@ export default function AdminProducts() {
       price: 0,
       stock_preset: "in_stock",
       stock_quantity: 10,
-      category_id: categories[0]?.id ?? "",
+      category_id: visibleCategories[0]?.id ?? categories[0]?.id ?? "",
       source_url: "",
       is_online: true,
     });
@@ -430,7 +445,7 @@ export default function AdminProducts() {
               : `${totalProductCount} product${totalProductCount === 1 ? "" : "s"} uploaded`}
           </p>
         </div>
-        <Button type="button" onClick={openCreate} disabled={categories.length === 0}>
+        <Button type="button" onClick={openCreate} disabled={visibleCategories.length === 0}>
           <Plus className="mr-2 size-4" />
           Add product
         </Button>
@@ -468,7 +483,7 @@ export default function AdminProducts() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories ({totalProductCount})</SelectItem>
-              {categories.map((c) => (
+              {visibleCategories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name} ({productCountByCategory.get(c.id) ?? 0})
                 </SelectItem>
@@ -494,8 +509,8 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      {categories.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No categories found. Apply database migrations.</p>
+      {visibleCategories.length === 0 ? (
+        <p className="text-muted-foreground text-sm">No visible categories. Add or show categories under Admin → Categories.</p>
       ) : (
         <div className="rounded-lg border bg-muted/30 p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -505,7 +520,7 @@ export default function AdminProducts() {
             </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
-            {categories.map((c) => {
+            {visibleCategories.map((c) => {
               const count = productCountByCategory.get(c.id) ?? 0;
               const active = categoryFilter === c.id;
               return (
@@ -747,7 +762,7 @@ export default function AdminProducts() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories.map((c) => (
+                        {visibleCategories.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.name}
                           </SelectItem>

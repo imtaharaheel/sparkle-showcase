@@ -3,6 +3,12 @@ export interface InventoryCategory {
   name: string;
   slug: string;
   created_at: string;
+  /** When false, hidden from shop filters and admin category dropdowns. */
+  is_visible?: boolean;
+  /** Lower numbers appear first in dropdowns. */
+  sort_order?: number;
+  /** Emoji shown next to the category name on the shop. */
+  icon?: string;
 }
 
 export interface InventoryProduct {
