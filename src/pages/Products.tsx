@@ -18,12 +18,51 @@ import { toCustomException } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CATALOG_STALE_MS = 30_000;
+
+type CatalogSortKey = "newest" | "name" | "price_asc" | "price_desc" | "stock_asc" | "stock_desc";
+
+function sortCatalogProducts(
+  items: StorefrontProduct[],
+  sortKey: CatalogSortKey,
+  catalogOrder: Map<string, number>,
+): StorefrontProduct[] {
+  const list = [...items];
+  switch (sortKey) {
+    case "newest":
+      list.sort((a, b) => (catalogOrder.get(a.id) ?? 0) - (catalogOrder.get(b.id) ?? 0));
+      break;
+    case "name":
+      list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "price_asc":
+      list.sort((a, b) => a.price - b.price);
+      break;
+    case "price_desc":
+      list.sort((a, b) => b.price - a.price);
+      break;
+    case "stock_asc":
+      list.sort((a, b) => (a.stockQuantity ?? 0) - (b.stockQuantity ?? 0));
+      break;
+    case "stock_desc":
+      list.sort((a, b) => (b.stockQuantity ?? 0) - (a.stockQuantity ?? 0));
+      break;
+  }
+  return list;
+}
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<CatalogSortKey>("price_asc");
   const [quoteDrawerOpen, setQuoteDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StorefrontProduct | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +89,7 @@ const Products = () => {
   const isLoading = productsPending || categoriesPending;
   const productList = products ?? [];
   const categoryList = categories ?? [];
+  const catalogOrder = new Map(productList.map((p, index) => [p.id, index]));
 
   const selectedCategory = searchParams.get("category") || "all";
 
@@ -66,6 +106,8 @@ const Products = () => {
         p.description.toLowerCase().includes(query),
     );
   }
+
+  const displayedProducts = sortCatalogProducts(filteredProducts, sortKey, catalogOrder);
 
   const handleCategoryChange = (category: string) => {
     if (category === "all") {
@@ -138,17 +180,34 @@ const Products = () => {
         {/* Filters */}
         <section className="sticky top-16 z-30 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-lg md:top-20">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              {/* Search */}
-              <div className="relative flex-1 md:max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
-                />
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                {/* Search */}
+                <div className="relative flex-1 sm:max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary/50"
+                  />
+                </div>
+
+                {/* Sort */}
+                <Select value={sortKey} onValueChange={(v) => setSortKey(v as CatalogSortKey)}>
+                  <SelectTrigger className="w-full sm:w-56 bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest first</SelectItem>
+                    <SelectItem value="name">Name (A–Z)</SelectItem>
+                    <SelectItem value="price_asc">Price (low → high)</SelectItem>
+                    <SelectItem value="price_desc">Price (high → low)</SelectItem>
+                    <SelectItem value="stock_asc">Stock (low → high)</SelectItem>
+                    <SelectItem value="stock_desc">Stock (high → low)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Category Filters */}
@@ -236,17 +295,17 @@ const Products = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
                 <span>Loading products…</span>
               </div>
-            ) : filteredProducts.length > 0 ? (
+            ) : displayedProducts.length > 0 ? (
               <>
                 <motion.p 
                   className="mb-6 text-sm text-gray-500"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+                  Showing {displayedProducts.length} product{displayedProducts.length !== 1 ? 's' : ''}
                 </motion.p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredProducts.map((product, index) => (
+                  {displayedProducts.map((product, index) => (
                     <ProductCard 
                       key={product.id} 
                       product={product} 

@@ -26,6 +26,8 @@ export interface StorefrontProduct {
   features: string[];
   webLink?: string;
   featured?: boolean;
+  /** Used for buyer sort options only. */
+  stockQuantity?: number;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -97,6 +99,7 @@ function inventoryToStorefront(
     webLink: parsed.webLink,
     featured: Boolean(p.is_featured),
     badge: p.stock_quantity === 0 ? "Out of Stock" : listingBadge || undefined,
+    stockQuantity: p.stock_quantity,
   };
 }
 
