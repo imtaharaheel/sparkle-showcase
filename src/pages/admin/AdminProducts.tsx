@@ -83,6 +83,9 @@ const productFormSchema = z
     stock_preset: stockPresetSchema,
     stock_quantity: z.coerce.number().int().min(0, "Stock must be 0 or more"),
     category_id: z.string().min(1, "Category is required"),
+    source_url: z
+      .string()
+      .refine((s) => s === "" || /^https?:\/\/.+/i.test(s), { message: "Enter a valid URL" }),
   })
   .superRefine((data, ctx) => {
     if (data.stock_preset === "out_of_stock" && data.stock_quantity !== 0) {
@@ -216,6 +219,7 @@ export default function AdminProducts() {
       stock_preset: "in_stock",
       stock_quantity: 10,
       category_id: "",
+      source_url: "",
     },
   });
 
@@ -231,6 +235,7 @@ export default function AdminProducts() {
       stock_preset: "in_stock",
       stock_quantity: 10,
       category_id: categories[0]?.id ?? "",
+      source_url: "",
     });
     setDialogOpen(true);
   };
@@ -245,6 +250,7 @@ export default function AdminProducts() {
       stock_preset: quantityToPreset(p.stock_quantity),
       stock_quantity: p.stock_quantity,
       category_id: p.category_id,
+      source_url: p.source_url ?? "",
     });
     setDialogOpen(true);
   };
@@ -270,7 +276,7 @@ export default function AdminProducts() {
       const stock_quantity = normalizeStockQuantity(values.stock_preset, values.stock_quantity);
       const supabase = getSupabase();
       let image_path = editing?.image_path ?? null;
-      if (imageFile && editing?.image_path) {
+      if (imageFile && editing?.image_path && !/^https?:\/\//i.test(editing.image_path)) {
         const { error: removeError } = await supabase.storage.from("product-images").remove([editing.image_path]);
         if (removeError) {
           throw new CustomException(removeError.message, removeError);
@@ -279,6 +285,7 @@ export default function AdminProducts() {
       if (imageFile) {
         image_path = await uploadImage(imageFile);
       }
+      const source_url = values.source_url?.trim() || null;
       if (editing) {
         const { error } = await supabase
           .from("inventory_products")
@@ -288,6 +295,7 @@ export default function AdminProducts() {
             price: values.price,
             stock_quantity,
             category_id: values.category_id,
+            source_url,
             ...(imageFile ? { image_path } : {}),
           })
           .eq("id", editing.id);
@@ -305,6 +313,7 @@ export default function AdminProducts() {
           stock_quantity,
           category_id: values.category_id,
           image_path,
+          source_url,
         });
         if (error) {
           throw new CustomException(error.message, error);
@@ -333,7 +342,7 @@ export default function AdminProducts() {
   const deleteMutation = useMutation({
     mutationFn: async (p: InventoryProduct) => {
       const supabase = getSupabase();
-      if (p.image_path) {
+      if (p.image_path && !/^https?:\/\//i.test(p.image_path)) {
         const { error: storageError } = await supabase.storage.from("product-images").remove([p.image_path]);
         if (storageError) {
           throw new CustomException(storageError.message, storageError);
@@ -630,6 +639,22 @@ export default function AdminProducts() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="source_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reference link (optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://…" />
+                    </FormControl>
+                    <p className="text-muted-foreground text-xs">
+                      Shown on the product page as an external link. Used for imported catalog items.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

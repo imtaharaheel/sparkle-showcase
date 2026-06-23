@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "generate:demo-sql": "tsx scripts/generate-demo-inventory-sql.ts",
+    "import:paklap-laptops": "tsx scripts/import-paklap-laptops.ts",
     "db:supabase:push": "supabase db push",
     "db:supabase:start": "supabase start",
     "db:supabase:stop": "supabase stop"

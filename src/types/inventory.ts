@@ -19,6 +19,8 @@ export interface InventoryProduct {
   legacy_demo_id?: string | null;
   is_featured?: boolean;
   listing_badge?: string | null;
+  /** Original supplier or reference page (e.g. Paklap product URL). */
+  source_url?: string | null;
 }
 
 export type StockStatusLabel = "In Stock" | "Low Stock" | "Out of Stock";
