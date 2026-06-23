@@ -1,16 +1,12 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { CustomException, toCustomException } from "@/lib/errors";
+import { deleteInventoryCategory, sortCategories } from "@/lib/admin-categories";
 import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -20,38 +16,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CategoryFormDialog } from "@/components/admin/CategoryFormDialog";
 import { toast } from "sonner";
-
-const categoryFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(80),
-  icon: z.string().trim().max(8, "Use a short emoji").optional(),
-  sort_order: z.coerce.number().int().min(0).max(999),
-  is_visible: z.boolean(),
-});
-
-type CategoryFormValues = z.infer<typeof categoryFormSchema>;
-
-function slugFromName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function sortCategories(list: InventoryCategory[]): InventoryCategory[] {
-  return [...list].sort(
-    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name),
-  );
-}
 
 async function fetchCategories(): Promise<InventoryCategory[]> {
   const supabase = getSupabase();
@@ -79,6 +53,7 @@ export default function AdminCategories() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryCategory | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<InventoryCategory | null>(null);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["inventory_categories"],
@@ -98,80 +73,32 @@ export default function AdminCategories() {
     return counts;
   }, [products]);
 
-  const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema),
-    defaultValues: {
-      name: "",
-      icon: "📦",
-      sort_order: 0,
-      is_visible: true,
+  const invalidateCategories = () => {
+    void queryClient.invalidateQueries({ queryKey: ["inventory_categories"] });
+    void queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (category: InventoryCategory) => deleteInventoryCategory(category.id),
+    onSuccess: (_data, category) => {
+      toast.success(`Deleted ${category.name}`);
+      invalidateCategories();
+      setDeleteTarget(null);
+    },
+    onError: (error) => {
+      toast.error(toCustomException(error, "Could not delete category").message);
     },
   });
 
   const openCreate = () => {
     setEditing(null);
-    form.reset({
-      name: "",
-      icon: "📦",
-      sort_order: (categories.length + 1) * 10,
-      is_visible: true,
-    });
     setDialogOpen(true);
   };
 
   const openEdit = (category: InventoryCategory) => {
     setEditing(category);
-    form.reset({
-      name: category.name,
-      icon: category.icon ?? "📦",
-      sort_order: category.sort_order ?? 0,
-      is_visible: category.is_visible !== false,
-    });
     setDialogOpen(true);
   };
-
-  const saveMutation = useMutation({
-    mutationFn: async (values: CategoryFormValues) => {
-      const supabase = getSupabase();
-      const payload = {
-        name: values.name.trim(),
-        icon: values.icon?.trim() || "📦",
-        sort_order: values.sort_order,
-        is_visible: values.is_visible,
-      };
-
-      if (editing) {
-        const { error } = await supabase.from("categories").update(payload).eq("id", editing.id);
-        if (error) {
-          throw new CustomException(error.message, error);
-        }
-        return;
-      }
-
-      const slug = slugFromName(values.name);
-      if (!slug) {
-        throw new CustomException("Could not create a URL slug from that name.");
-      }
-
-      const { error } = await supabase.from("categories").insert({
-        ...payload,
-        slug,
-      });
-      if (error) {
-        throw new CustomException(error.message, error);
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["inventory_categories"] });
-      void queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
-      toast.success(editing ? "Category updated" : "Category added");
-      setDialogOpen(false);
-    },
-    onError: (error) => {
-      const ex = toCustomException(error, "Could not save category");
-      toast.error(ex.message);
-    },
-  });
 
   const sortedCategories = sortCategories(categories);
   const visibleCount = sortedCategories.filter((c) => c.is_visible !== false).length;
@@ -209,7 +136,7 @@ export default function AdminCategories() {
                 <TableHead>Slug</TableHead>
                 <TableHead className="text-right">Products</TableHead>
                 <TableHead>Visible</TableHead>
-                <TableHead className="w-20" />
+                <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -230,10 +157,22 @@ export default function AdminCategories() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(category)}>
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit {category.name}</span>
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(category)}>
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit {category.name}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeleteTarget(category)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete {category.name}</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -242,92 +181,40 @@ export default function AdminCategories() {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit category" : "Add category"}</DialogTitle>
-            <DialogDescription>
-              Visible categories show in the shop filters and when you add products. Lower order numbers appear first.
-            </DialogDescription>
-          </DialogHeader>
+      <CategoryFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        categoryCount={categories.length}
+        onSaved={invalidateCategories}
+      />
 
-          <Form {...form}>
-            <form
-              className="space-y-4"
-              onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(next) => !next && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && (productCountByCategory.get(deleteTarget.id) ?? 0) > 0
+                ? "This category still has products. Move or delete those products before removing the category."
+                : "This cannot be undone. The category will be removed from your shop filters."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={
+                deleteMutation.isPending ||
+                Boolean(deleteTarget && (productCountByCategory.get(deleteTarget.id) ?? 0) > 0)
+              }
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Apple Products" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icon (emoji)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="🍎" className="max-w-[120px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="sort_order"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sort order</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} className="max-w-[120px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="is_visible"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel>Show in dropdowns</FormLabel>
-                      <p className="text-muted-foreground text-sm">
-                        Turn off to hide from the shop and product filters.
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saveMutation.isPending}>
-                  {saveMutation.isPending ? "Saving…" : editing ? "Save changes" : "Add category"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

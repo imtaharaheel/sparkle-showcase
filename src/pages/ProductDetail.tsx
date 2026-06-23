@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, MessageCircle, Check, ExternalLink } from "lucide-react";
@@ -9,6 +9,8 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductSpecificationsTable } from "@/components/ProductSpecificationsTable";
+import { ProductVariantSelector } from "@/components/ProductVariantSelector";
+import { formatVariantWhatsAppLine, type ProductVariantOption } from "@/lib/product-variants";
 import {
   fetchCatalogCategories,
   fetchCatalogProductById,
@@ -24,6 +26,13 @@ const CATALOG_STALE_MS = 30_000;
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [selectedOption, setSelectedOption] = useState<ProductVariantOption | null>(null);
+
+  const handleVariantChange = useCallback((price: number, option: ProductVariantOption | null) => {
+    setSelectedPrice(price);
+    setSelectedOption(option);
+  }, []);
 
   const {
     data: product,
@@ -56,6 +65,8 @@ const ProductDetail = () => {
   useEffect(() => {
     if (product) {
       window.scrollTo(0, 0);
+      setSelectedPrice(null);
+      setSelectedOption(null);
     }
   }, [product?.id]);
 
@@ -106,8 +117,13 @@ const ProductDetail = () => {
     );
   }
 
+  const displayPrice = selectedPrice ?? product.price;
+  const hasVariants = Boolean(product.variants && product.variants.options.length > 0);
+
   const handleWhatsApp = () => {
-    const message = `Hi! I'm interested in ${product.name} (${product.model}) - ${formatPrice(product.price)}. Can you provide more details?`;
+    const message = hasVariants
+      ? formatVariantWhatsAppLine(product.name, selectedOption, displayPrice)
+      : `Hi! I'm interested in ${product.name} (${product.model}) - ${formatPrice(displayPrice)}. Can you provide more details?`;
     window.open(`https://wa.me/923342914563?text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -184,9 +200,19 @@ const ProductDetail = () => {
 
                   <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">{product.name}</h1>
 
+                  {product.variants && product.variants.options.length > 0 ? (
+                    <ProductVariantSelector
+                      variants={product.variants}
+                      onSelectionChange={handleVariantChange}
+                    />
+                  ) : null}
+
                   <div className="mb-6">
+                    {hasVariants && selectedPrice === null ? (
+                      <span className="text-muted-foreground text-sm">From </span>
+                    ) : null}
                     <span className="font-display text-4xl font-bold text-primary md:text-5xl">
-                      {formatPrice(product.price)}
+                      {formatPrice(displayPrice)}
                     </span>
                   </div>
 

@@ -48,6 +48,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { CategoryManageMenu } from "@/components/admin/CategoryManageMenu";
+import { sortCategories } from "@/lib/admin-categories";
 import { toast } from "sonner";
 
 const stockPresetSchema = z.enum(["out_of_stock", "low_stock", "in_stock"]);
@@ -142,12 +144,6 @@ async function fetchCategories(): Promise<InventoryCategory[]> {
     throw new CustomException(error.message, error);
   }
   return (data ?? []) as InventoryCategory[];
-}
-
-function sortCategories(list: InventoryCategory[]): InventoryCategory[] {
-  return [...list].sort(
-    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name),
-  );
 }
 
 function sanitizeFileName(name: string): string {
@@ -475,22 +471,14 @@ export default function AdminProducts() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1.5 sm:w-48">
-          <Label className="text-xs">Category</Label>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories ({totalProductCount})</SelectItem>
-              {visibleCategories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name} ({productCountByCategory.get(c.id) ?? 0})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <CategoryManageMenu
+          value={categoryFilter}
+          onValueChange={setCategoryFilter}
+          categories={categories}
+          productCountByCategory={productCountByCategory}
+          totalProductCount={totalProductCount}
+          className="sm:w-56"
+        />
         <div className="flex flex-col gap-1.5 sm:w-56">
           <Label className="text-xs">Sort by</Label>
           <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>

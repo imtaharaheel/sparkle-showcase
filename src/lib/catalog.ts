@@ -3,6 +3,11 @@ import { CustomException } from "@/lib/errors";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
 import { getPublicImageUrl } from "@/types/inventory";
+import {
+  parseProductVariants,
+  resolveDisplayPrice,
+  type ProductVariants,
+} from "@/lib/product-variants";
 
 export interface ProductSpecification {
   label: string;
@@ -36,6 +41,9 @@ export interface StorefrontProduct {
   /** Used for buyer sort options only. */
   stockQuantity?: number;
   specifications: ProductSpecification[];
+  variants?: ProductVariants | null;
+  /** True when `price` is the lowest variant price. */
+  priceFrom?: boolean;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -106,12 +114,15 @@ function inventoryToStorefront(
   const parsed = splitDescriptionForStorefront(p.description, fallbackModel);
   const images = resolveStorefrontImages(p.image_path, p.gallery_image_paths);
   const listingBadge = p.listing_badge?.trim();
+  const variants = parseProductVariants(p.variants);
+  const basePrice = Number(p.price);
+  const displayPrice = resolveDisplayPrice(basePrice, variants);
   return {
     id: p.legacy_demo_id?.trim() || p.id,
     model: parsed.model,
     name: p.name,
     description: parsed.description,
-    price: Number(p.price),
+    price: displayPrice,
     image: images[0] ?? "",
     images,
     category: cat?.slug ?? "accessory",
@@ -123,6 +134,8 @@ function inventoryToStorefront(
     specifications: Array.isArray(p.specifications)
       ? p.specifications.filter((row) => row?.label && row?.value)
       : [],
+    variants,
+    priceFrom: Boolean(variants && variants.options.length > 0),
   };
 }
 

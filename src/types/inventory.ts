@@ -11,6 +11,8 @@ export interface InventoryCategory {
   icon?: string;
 }
 
+import type { ProductVariants } from "@/lib/product-variants";
+
 export interface InventoryProduct {
   id: string;
   name: string;
@@ -33,6 +35,8 @@ export interface InventoryProduct {
   is_online?: boolean;
   /** Label/value rows for the product detail specs table. */
   specifications?: { label: string; value: string }[] | null;
+  /** Size / storage options with per-option pricing. */
+  variants?: ProductVariants | null;
 }
 
 export type StockStatusLabel = "In Stock" | "Low Stock" | "Out of Stock";
