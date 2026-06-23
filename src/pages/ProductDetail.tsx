@@ -158,12 +158,13 @@ const ProductDetail = () => {
                       </Badge>
                     </div>
                   )}
-                  <div className="flex aspect-square items-center justify-center p-12">
+                  <div className="flex aspect-square items-center justify-center bg-white p-6 sm:p-10">
                     {product.image ? (
                       <img
                         src={product.image}
                         alt={product.name}
                         loading="lazy"
+                        decoding="async"
                         referrerPolicy="no-referrer"
                         className="max-h-full max-w-full object-contain"
                       />

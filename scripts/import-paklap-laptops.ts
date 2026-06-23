@@ -56,6 +56,11 @@ function imageExtension(imageUrl: string): string {
   return match ? `.${match[1].toLowerCase().replace("jpeg", "jpg")}` : ".jpg";
 }
 
+/** Paklap listing pages use ~210px cached thumbnails; strip cache for the original file. */
+function toFullSizePaklapImageUrl(imageUrl: string): string {
+  return imageUrl.replace(/\/media\/catalog\/product\/cache\/[^/]+\//i, "/media/catalog/product/");
+}
+
 async function fetchPage(page: number): Promise<string> {
   const url = page <= 1 ? BASE_URL : `${BASE_URL}?p=${page}`;
   const curlBin = process.platform === "win32" ? "curl.exe" : "curl";
@@ -102,7 +107,7 @@ function parseProductsFromHtml(html: string): Omit<PaklapLaptop, "localImagePath
       name,
       price,
       sourceUrl,
-      imageUrl,
+      imageUrl: toFullSizePaklapImageUrl(imageUrl),
       importKey: importKeyFromUrl(sourceUrl),
     });
   }
@@ -161,7 +166,35 @@ where not exists (
   return header + inserts.join("\n");
 }
 
-async function scrapeAllLaptops(): Promise<PaklapLaptop[]> {
+async function downloadLaptopImages(
+  items: Omit<PaklapLaptop, "localImagePath">[],
+  options: { redownload?: boolean } = {},
+): Promise<PaklapLaptop[]> {
+  const withImages: PaklapLaptop[] = [];
+  fs.mkdirSync(LAPTOP_IMAGE_DIR, { recursive: true });
+
+  let index = 0;
+  for (const item of items) {
+    index += 1;
+    const imageUrl = toFullSizePaklapImageUrl(item.imageUrl);
+    const ext = imageExtension(imageUrl);
+    const filename = `${item.importKey}${ext}`;
+    const diskPath = path.join(LAPTOP_IMAGE_DIR, filename);
+    const webPath = `/products/laptops/${filename}`;
+
+    if (options.redownload || !fs.existsSync(diskPath)) {
+      process.stdout.write(`Downloading image ${index}/${items.length}…\r`);
+      await downloadImage(imageUrl, diskPath);
+    }
+
+    withImages.push({ ...item, imageUrl, localImagePath: webPath });
+  }
+
+  console.log(`\nDownloaded ${withImages.length} laptop images to public/products/laptops/`);
+  return withImages;
+}
+
+async function scrapeAllLaptops(): Promise<Omit<PaklapLaptop, "localImagePath">[]> {
   const byKey = new Map<string, Omit<PaklapLaptop, "localImagePath">>();
 
   for (let page = 1; page <= 4; page++) {
@@ -175,37 +208,32 @@ async function scrapeAllLaptops(): Promise<PaklapLaptop[]> {
     await new Promise((r) => setTimeout(r, 400));
   }
 
-  const scraped = [...byKey.values()].sort((a, b) => a.price - b.price);
-  const withImages: PaklapLaptop[] = [];
+  return [...byKey.values()].sort((a, b) => a.price - b.price);
+}
 
-  fs.mkdirSync(LAPTOP_IMAGE_DIR, { recursive: true });
-
-  let index = 0;
-  for (const item of scraped) {
-    index += 1;
-    const ext = imageExtension(item.imageUrl);
-    const filename = `${item.importKey}${ext}`;
-    const diskPath = path.join(LAPTOP_IMAGE_DIR, filename);
-    const webPath = `/products/laptops/${filename}`;
-
-    if (!fs.existsSync(diskPath)) {
-      process.stdout.write(`Downloading image ${index}/${scraped.length}…\r`);
-      await downloadImage(item.imageUrl, diskPath);
-    }
-
-    withImages.push({ ...item, localImagePath: webPath });
+function loadSnapshot(): Omit<PaklapLaptop, "localImagePath">[] {
+  const snapshotPath = path.join(__dirname, "paklap-laptops.snapshot.json");
+  if (!fs.existsSync(snapshotPath)) {
+    throw new CustomException(`Snapshot not found: ${snapshotPath}. Run a full import first.`);
   }
-
-  console.log(`\nDownloaded ${withImages.length} laptop images to public/products/laptops/`);
-
-  return withImages;
+  const raw = JSON.parse(fs.readFileSync(snapshotPath, "utf8")) as PaklapLaptop[];
+  return raw.map(({ localImagePath: _, ...item }) => ({
+    ...item,
+    imageUrl: toFullSizePaklapImageUrl(item.imageUrl),
+  }));
 }
 
 async function main(): Promise<void> {
-  const products = await scrapeAllLaptops();
-  if (products.length === 0) {
+  const args = new Set(process.argv.slice(2));
+  const imagesOnly = args.has("--images-only");
+  const redownload = args.has("--redownload");
+
+  const scraped = imagesOnly ? loadSnapshot() : await scrapeAllLaptops();
+  if (scraped.length === 0) {
     throw new CustomException("No laptops parsed — Paklap HTML layout may have changed.");
   }
+
+  const products = await downloadLaptopImages(scraped, { redownload });
 
   const snapshotPath = path.join(__dirname, "paklap-laptops.snapshot.json");
   fs.writeFileSync(snapshotPath, JSON.stringify(products, null, 2), "utf8");
