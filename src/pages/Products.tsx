@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useInView } from "framer-motion";
@@ -29,45 +29,43 @@ const Products = () => {
   const headerRef = useRef<HTMLDivElement>(null);
   const isHeaderInView = useInView(headerRef, { once: true });
 
-  const { data: products = [], isLoading: productsLoading, isError: productsError, error: productsErr } =
-    useQuery({
-      queryKey: ["catalog_products"],
-      queryFn: fetchCatalogProducts,
-      staleTime: CATALOG_STALE_MS,
-    });
+  const {
+    data: products,
+    isPending: productsPending,
+    isError: productsError,
+    error: productsErr,
+  } = useQuery({
+    queryKey: ["catalog_products"],
+    queryFn: fetchCatalogProducts,
+    staleTime: CATALOG_STALE_MS,
+  });
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isPending: categoriesPending } = useQuery({
     queryKey: ["catalog_categories"],
     queryFn: fetchCatalogCategories,
     staleTime: CATALOG_STALE_MS,
   });
 
   const catalogError = productsError ? toCustomException(productsErr, "Could not load products") : null;
-  const isLoading = productsLoading || categoriesLoading;
-  
+  const isLoading = productsPending || categoriesPending;
+  const productList = products ?? [];
+  const categoryList = categories ?? [];
+
   const selectedCategory = searchParams.get("category") || "all";
 
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-    
-    // Filter by category
-    if (selectedCategory !== "all") {
-      result = result.filter(p => p.category === selectedCategory);
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        p => 
-          p.name.toLowerCase().includes(query) ||
-          p.model.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query)
-      );
-    }
-    
-    return result;
-  }, [selectedCategory, searchQuery]);
+  let filteredProducts = productList;
+  if (selectedCategory !== "all") {
+    filteredProducts = filteredProducts.filter((p) => p.category === selectedCategory);
+  }
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filteredProducts = filteredProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.model.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query),
+    );
+  }
 
   const handleCategoryChange = (category: string) => {
     if (category === "all") {
@@ -127,7 +125,7 @@ const Products = () => {
               <h1 className="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
                 {selectedCategory === "all" 
                   ? <>All <span className="gradient-brand-text">Products</span></>
-                  : <span className="gradient-brand-text">{categories.find(c => c.id === selectedCategory)?.name || "Products"}</span>
+                  : <span className="gradient-brand-text">{categoryList.find(c => c.id === selectedCategory)?.name || "Products"}</span>
                 }
               </h1>
               <p className="mx-auto max-w-2xl text-lg text-gray-400">
@@ -167,7 +165,7 @@ const Products = () => {
                 >
                   All
                 </motion.button>
-                {categories.map((category) => (
+                {categoryList.map((category) => (
                   <motion.button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
@@ -196,7 +194,7 @@ const Products = () => {
                 <span className="text-sm text-gray-500">Filters:</span>
                 {selectedCategory !== "all" && (
                   <Badge variant="secondary" className="gap-1 bg-white/10 text-gray-300 border-white/20">
-                    {categories.find(c => c.id === selectedCategory)?.name}
+                    {categoryList.find(c => c.id === selectedCategory)?.name}
                     <X 
                       className="h-3 w-3 cursor-pointer hover:text-white" 
                       onClick={() => handleCategoryChange("all")}
