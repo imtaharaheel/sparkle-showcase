@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, MessageCircle, Check, ExternalLink } from "lucide-react";
@@ -46,6 +47,16 @@ const ProductDetail = () => {
     queryFn: fetchCatalogCategories,
     staleTime: CATALOG_STALE_MS,
   });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  useEffect(() => {
+    if (product) {
+      window.scrollTo(0, 0);
+    }
+  }, [product?.id]);
 
   if (isLoading) {
     return (
@@ -163,7 +174,7 @@ const ProductDetail = () => {
                       <img
                         src={product.image}
                         alt={product.name}
-                        loading="lazy"
+                        loading="eager"
                         decoding="async"
                         referrerPolicy="no-referrer"
                         className="max-h-full max-w-full object-contain"
