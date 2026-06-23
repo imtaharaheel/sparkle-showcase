@@ -84,9 +84,11 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
               style={{ transform: "translateZ(30px)" }}
             >
               {product.image ? (
-                <img 
-                  src={product.image} 
+                <img
+                  src={product.image}
                   alt={product.name}
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
                 />
               ) : (
@@ -101,19 +103,23 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
 
           {/* Content */}
           <div className="flex flex-1 flex-col p-5" style={{ transform: "translateZ(20px)" }}>
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-primary">
-                {product.model}
-              </span>
-            </div>
-            
-            <h3 className="mb-2 font-display text-lg font-semibold leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+            {product.description.trim() ? (
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-primary">
+                  {product.model}
+                </span>
+              </div>
+            ) : null}
+
+            <h3 className="mb-2 font-display text-lg font-semibold leading-tight text-foreground line-clamp-3 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
-            
-            <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-              {product.description}
-            </p>
+
+            {product.description.trim() ? (
+              <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+            ) : (
+              <div className="mb-4" />
+            )}
 
             <div className="mt-auto flex items-center justify-between gap-3">
               <span className="font-display text-xl font-bold text-primary">

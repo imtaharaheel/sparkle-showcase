@@ -180,6 +180,16 @@ export default function AdminProducts() {
     return m;
   }, [categories]);
 
+  const productCountByCategory = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of products) {
+      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
+
+  const totalProductCount = products.length;
+
   const filteredSorted = useMemo(() => {
     let list = [...products];
     const q = search.trim().toLowerCase();
@@ -414,7 +424,11 @@ export default function AdminProducts() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="text-muted-foreground text-sm">Add, edit, and remove inventory items.</p>
+          <p className="text-muted-foreground text-sm">
+            {isLoading
+              ? "Loading inventory…"
+              : `${totalProductCount} product${totalProductCount === 1 ? "" : "s"} uploaded`}
+          </p>
         </div>
         <Button type="button" onClick={openCreate} disabled={categories.length === 0}>
           <Plus className="mr-2 size-4" />
@@ -453,10 +467,10 @@ export default function AdminProducts() {
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
+              <SelectItem value="all">All categories ({totalProductCount})</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                  {c.name} ({productCountByCategory.get(c.id) ?? 0})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -482,9 +496,45 @@ export default function AdminProducts() {
 
       {categories.length === 0 ? (
         <p className="text-muted-foreground text-sm">No categories found. Apply database migrations.</p>
-      ) : null}
+      ) : (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium">Products by category</p>
+            <Badge variant="outline" className="tabular-nums">
+              {totalProductCount} total
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((c) => {
+              const count = productCountByCategory.get(c.id) ?? 0;
+              const active = categoryFilter === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCategoryFilter(active ? "all" : c.id)}
+                  className="focus-visible:ring-ring rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                >
+                  <Badge variant={active ? "default" : "secondary"} className="tabular-nums">
+                    {c.name}: {count}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border">
+        {!isLoading && (
+          <p className="text-muted-foreground border-b px-4 py-2 text-sm">
+            Showing {filteredSorted.length} of {totalProductCount} product
+            {totalProductCount === 1 ? "" : "s"}
+            {categoryFilter !== "all" && categoryNameById.get(categoryFilter)
+              ? ` in ${categoryNameById.get(categoryFilter)}`
+              : ""}
+          </p>
+        )}
         {isLoading ? (
           <p className="text-muted-foreground p-6 text-sm">Loading…</p>
         ) : (

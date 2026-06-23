@@ -1,5 +1,5 @@
 /**
- * Scrapes Paklap "New Laptops" listing and writes a Supabase seed migration.
+ * Scrapes Paklap "New Laptops" listing, downloads images locally, writes a Supabase migration.
  * Run: npm run import:paklap-laptops
  */
 import * as fs from "node:fs";
@@ -12,6 +12,7 @@ import { CustomException } from "../src/lib/errors";
 const execFileAsync = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LAPTOP_IMAGE_DIR = path.join(__dirname, "../public/products/laptops");
 
 const BASE_URL = "https://www.paklap.pk/laptops-prices.html";
 const USER_AGENT =
@@ -21,10 +22,10 @@ const DEFAULT_STOCK = 5;
 export interface PaklapLaptop {
   name: string;
   price: number;
-  regularPrice: number | null;
   sourceUrl: string;
   imageUrl: string;
-  listingBadge: string | null;
+  localImagePath: string;
+  importKey: string;
 }
 
 function decodeHtml(text: string): string {
@@ -45,6 +46,16 @@ function escSql(s: string): string {
   return s.replace(/'/g, "''");
 }
 
+function importKeyFromUrl(sourceUrl: string): string {
+  const match = sourceUrl.match(/paklap\.pk\/([^/?#]+)\.html/i);
+  return match?.[1] ?? sourceUrl.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+}
+
+function imageExtension(imageUrl: string): string {
+  const match = imageUrl.match(/\.(jpe?g|png|webp)(\?|$)/i);
+  return match ? `.${match[1].toLowerCase().replace("jpeg", "jpg")}` : ".jpg";
+}
+
 async function fetchPage(page: number): Promise<string> {
   const url = page <= 1 ? BASE_URL : `${BASE_URL}?p=${page}`;
   const curlBin = process.platform === "win32" ? "curl.exe" : "curl";
@@ -63,9 +74,9 @@ async function fetchPage(page: number): Promise<string> {
   return html;
 }
 
-function parseProductsFromHtml(html: string): PaklapLaptop[] {
+function parseProductsFromHtml(html: string): Omit<PaklapLaptop, "localImagePath">[] {
   const blocks = html.split('class="item product product-item"').slice(1);
-  const products: PaklapLaptop[] = [];
+  const products: Omit<PaklapLaptop, "localImagePath">[] = [];
 
   for (const block of blocks) {
     const linkMatch = block.match(/class="product-item-link"\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
@@ -80,68 +91,69 @@ function parseProductsFromHtml(html: string): PaklapLaptop[] {
     if (!finalPriceMatch) continue;
     const price = Number(finalPriceMatch[1]);
 
-    const oldPriceMatch = block.match(/data-price-amount="(\d+)"\s+data-price-type="oldPrice"/i);
-    const regularPrice = oldPriceMatch ? Number(oldPriceMatch[1]) : null;
-
     const imageMatch = block.match(
       /class="product-image-photo"\s+src="(https:\/\/www\.paklap\.pk\/media\/[^"]+)"/i,
     );
     const imageUrl = imageMatch?.[1] ?? "";
-
-    const hasSpecial = /class="special-price"/i.test(block);
-    const listingBadge = hasSpecial ? "Special" : null;
 
     if (!name || !sourceUrl || !imageUrl || !Number.isFinite(price)) continue;
 
     products.push({
       name,
       price,
-      regularPrice,
       sourceUrl,
       imageUrl,
-      listingBadge,
+      importKey: importKeyFromUrl(sourceUrl),
     });
   }
 
   return products;
 }
 
-function buildDescription(p: PaklapLaptop): string {
-  const lines = [`Model: ${p.name}`, "", p.name];
-  if (p.regularPrice && p.regularPrice > p.price) {
-    lines.push("", `Reference regular price: Rs. ${p.regularPrice.toLocaleString("en-PK")}`);
+async function downloadImage(imageUrl: string, destFile: string): Promise<void> {
+  const curlBin = process.platform === "win32" ? "curl.exe" : "curl";
+  await fs.promises.mkdir(path.dirname(destFile), { recursive: true });
+  await execFileAsync(
+    curlBin,
+    ["-sL", imageUrl, "-o", destFile, "-H", `User-Agent: ${USER_AGENT}`],
+    { maxBuffer: 20 * 1024 * 1024 },
+  );
+  const stat = await fs.promises.stat(destFile);
+  if (stat.size < 500) {
+    throw new CustomException(`Downloaded image too small: ${imageUrl}`);
   }
-  lines.push("", `Reference listing: ${p.sourceUrl}`);
-  return lines.join("\n");
 }
 
 function buildMigrationSql(products: PaklapLaptop[]): string {
-  const header = `-- Paklap "New Laptops" catalog import (${products.length} products).
--- Reference prices and images from paklap.pk — update prices manually in Admin.
--- Idempotent: skips rows that already exist with the same source_url.
+  const header = `-- Re-import Paklap new laptops with clean titles, local images, empty descriptions.
+-- Removes previous Paklap rows and re-inserts by import_key.
+
+delete from public.inventory_products
+where source_url like 'https://www.paklap.pk/%';
 
 `;
 
   const inserts = products.map((p) => {
-    const desc = escSql(buildDescription(p));
     const name = escSql(p.name);
-    const url = escSql(p.sourceUrl);
-    const img = escSql(p.imageUrl);
+    const img = escSql(p.localImagePath);
+    const key = escSql(p.importKey);
     const price = p.price.toFixed(2);
-    const badgeSql = p.listingBadge ? `'${escSql(p.listingBadge)}'` : "null";
+    const sourceUrl = escSql(p.sourceUrl);
 
-    return `insert into public.inventory_products (name, description, price, stock_quantity, category_id, image_path, source_url, listing_badge)
+    return `insert into public.inventory_products (name, description, price, stock_quantity, category_id, image_path, source_url, legacy_demo_id, listing_badge, is_online)
 select
   '${name}',
-  '${desc}',
+  '',
   ${price},
   ${DEFAULT_STOCK},
   (select id from public.categories where slug = 'laptop' limit 1),
   '${img}',
-  '${url}',
-  ${badgeSql}
+  '${sourceUrl}',
+  '${key}',
+  null,
+  true
 where not exists (
-  select 1 from public.inventory_products x where x.source_url = '${url}'
+  select 1 from public.inventory_products x where x.legacy_demo_id = '${key}'
 );
 `;
   });
@@ -150,7 +162,7 @@ where not exists (
 }
 
 async function scrapeAllLaptops(): Promise<PaklapLaptop[]> {
-  const byUrl = new Map<string, PaklapLaptop>();
+  const byKey = new Map<string, Omit<PaklapLaptop, "localImagePath">>();
 
   for (let page = 1; page <= 4; page++) {
     console.log(`Fetching page ${page}…`);
@@ -158,12 +170,35 @@ async function scrapeAllLaptops(): Promise<PaklapLaptop[]> {
     const items = parseProductsFromHtml(html);
     console.log(`  Found ${items.length} products`);
     for (const item of items) {
-      byUrl.set(item.sourceUrl, item);
+      byKey.set(item.importKey, item);
     }
     await new Promise((r) => setTimeout(r, 400));
   }
 
-  return [...byUrl.values()].sort((a, b) => a.price - b.price);
+  const scraped = [...byKey.values()].sort((a, b) => a.price - b.price);
+  const withImages: PaklapLaptop[] = [];
+
+  fs.mkdirSync(LAPTOP_IMAGE_DIR, { recursive: true });
+
+  let index = 0;
+  for (const item of scraped) {
+    index += 1;
+    const ext = imageExtension(item.imageUrl);
+    const filename = `${item.importKey}${ext}`;
+    const diskPath = path.join(LAPTOP_IMAGE_DIR, filename);
+    const webPath = `/products/laptops/${filename}`;
+
+    if (!fs.existsSync(diskPath)) {
+      process.stdout.write(`Downloading image ${index}/${scraped.length}…\r`);
+      await downloadImage(item.imageUrl, diskPath);
+    }
+
+    withImages.push({ ...item, localImagePath: webPath });
+  }
+
+  console.log(`\nDownloaded ${withImages.length} laptop images to public/products/laptops/`);
+
+  return withImages;
 }
 
 async function main(): Promise<void> {
@@ -178,7 +213,7 @@ async function main(): Promise<void> {
 
   const migrationPath = path.join(
     __dirname,
-    "../supabase/migrations/20250622130000_seed_paklap_laptops.sql",
+    "../supabase/migrations/20250623140000_redo_paklap_laptops.sql",
   );
   fs.writeFileSync(migrationPath, buildMigrationSql(products), "utf8");
   console.log(`Wrote migration to ${migrationPath}`);

@@ -163,6 +163,8 @@ const ProductDetail = () => {
                       <img
                         src={product.image}
                         alt={product.name}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
                         className="max-h-full max-w-full object-contain"
                       />
                     ) : (
@@ -194,7 +196,9 @@ const ProductDetail = () => {
                     {categoryInfo?.icon} {categoryInfo?.name}
                   </Link>
 
-                  <p className="mb-2 text-sm font-medium text-muted-foreground">Model: {product.model}</p>
+                  {product.description.trim() ? (
+                    <p className="mb-2 text-sm font-medium text-muted-foreground">Model: {product.model}</p>
+                  ) : null}
 
                   <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">{product.name}</h1>
 
@@ -204,7 +208,9 @@ const ProductDetail = () => {
                     </span>
                   </div>
 
-                  <p className="mb-8 whitespace-pre-line text-lg text-muted-foreground">{product.description}</p>
+                  {product.description.trim() ? (
+                    <p className="mb-8 whitespace-pre-line text-lg text-muted-foreground">{product.description}</p>
+                  ) : null}
 
                   <div className="mb-8 flex flex-wrap gap-4">
                     <Button

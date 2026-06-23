@@ -94,7 +94,7 @@ function inventoryToStorefront(
     image: url ?? "",
     category: cat?.slug ?? "accessory",
     features: [],
-    webLink: p.source_url?.trim() || parsed.webLink,
+    webLink: parsed.webLink,
     featured: Boolean(p.is_featured),
     badge: p.stock_quantity === 0 ? "Out of Stock" : listingBadge || undefined,
   };
