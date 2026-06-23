@@ -4,6 +4,11 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
 import { getPublicImageUrl } from "@/types/inventory";
 
+export interface ProductSpecification {
+  label: string;
+  value: string;
+}
+
 /** Public storefront category: `id` is the slug (used in /products?category=). */
 export interface StorefrontCategory {
   id: string;
@@ -30,6 +35,7 @@ export interface StorefrontProduct {
   featured?: boolean;
   /** Used for buyer sort options only. */
   stockQuantity?: number;
+  specifications: ProductSpecification[];
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -114,6 +120,9 @@ function inventoryToStorefront(
     featured: Boolean(p.is_featured),
     badge: p.stock_quantity === 0 ? "Out of Stock" : listingBadge || undefined,
     stockQuantity: p.stock_quantity,
+    specifications: Array.isArray(p.specifications)
+      ? p.specifications.filter((row) => row?.label && row?.value)
+      : [],
   };
 }
 
@@ -132,6 +141,7 @@ function staticProductToStorefront(p: Product): StorefrontProduct {
     badge: p.badge,
     webLink: p.webLink,
     featured: p.featured,
+    specifications: [],
   };
 }
 

@@ -31,6 +31,8 @@ export interface InventoryProduct {
   source_url?: string | null;
   /** When false, product is hidden from the public website. */
   is_online?: boolean;
+  /** Label/value rows for the product detail specs table. */
+  specifications?: { label: string; value: string }[] | null;
 }
 
 export type StockStatusLabel = "In Stock" | "Low Stock" | "Out of Stock";

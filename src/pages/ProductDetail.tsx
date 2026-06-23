@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
+import { ProductSpecificationsTable } from "@/components/ProductSpecificationsTable";
 import {
   fetchCatalogCategories,
   fetchCatalogProductById,
@@ -226,7 +227,7 @@ const ProductDetail = () => {
                   {product.features.length > 0 ? (
                     <div>
                       <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
-                        Features & Specifications
+                        Features
                       </h3>
                       <ul className="grid gap-3 sm:grid-cols-2">
                         {product.features.map((feature, index) => (
@@ -243,14 +244,28 @@ const ProductDetail = () => {
                         ))}
                       </ul>
                     </div>
-                  ) : (
+                  ) : product.specifications.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       For full specifications, message us on WhatsApp — we&apos;re happy to help.
                     </p>
-                  )}
+                  ) : null}
                 </motion.div>
               </div>
             </motion.div>
+
+            {product.specifications.length > 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.15 }}
+                className="mt-12"
+              >
+                <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+                  Technical Specifications
+                </h2>
+                <ProductSpecificationsTable specifications={product.specifications} />
+              </motion.div>
+            ) : null}
           </div>
         </section>
 

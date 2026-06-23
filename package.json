@@ -16,6 +16,7 @@
     "import:paklap-laptops": "tsx scripts/import-paklap-laptops.ts",
     "refresh:paklap-images": "tsx scripts/import-paklap-laptops.ts --galleries-only --redownload",
     "import:paklap-galleries": "tsx scripts/import-paklap-laptops.ts --galleries-only --redownload",
+    "import:paklap-specs": "tsx scripts/import-paklap-specs.ts",
     "db:supabase:push": "supabase db push",
     "db:supabase:start": "supabase start",
     "db:supabase:stop": "supabase stop"

@@ -27,6 +27,7 @@ export interface PaklapLaptop {
   localImagePath: string;
   localGalleryPaths: string[];
   importKey: string;
+  specifications?: { label: string; value: string }[];
 }
 
 function decodeHtml(text: string): string {
