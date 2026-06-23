@@ -44,9 +44,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 const stockPresetSchema = z.enum(["out_of_stock", "low_stock", "in_stock"]);
@@ -86,6 +87,7 @@ const productFormSchema = z
     source_url: z
       .string()
       .refine((s) => s === "" || /^https?:\/\/.+/i.test(s), { message: "Enter a valid URL" }),
+    is_online: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.stock_preset === "out_of_stock" && data.stock_quantity !== 0) {
@@ -114,6 +116,7 @@ const productFormSchema = z
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
 type SortKey = "newest" | "name" | "price_asc" | "price_desc" | "stock_asc" | "stock_desc";
+type VisibilityFilter = "all" | "online" | "offline";
 
 async function fetchProducts(): Promise<InventoryProduct[]> {
   const supabase = getSupabase();
@@ -152,6 +155,7 @@ export default function AdminProducts() {
   const { user } = useAdminAuth();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
@@ -185,6 +189,11 @@ export default function AdminProducts() {
     if (categoryFilter !== "all") {
       list = list.filter((p) => p.category_id === categoryFilter);
     }
+    if (visibilityFilter === "online") {
+      list = list.filter((p) => p.is_online !== false);
+    } else if (visibilityFilter === "offline") {
+      list = list.filter((p) => p.is_online === false);
+    }
     switch (sortKey) {
       case "newest":
         list.sort((a, b) => {
@@ -208,7 +217,7 @@ export default function AdminProducts() {
         list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [products, search, categoryFilter, sortKey]);
+  }, [products, search, categoryFilter, visibilityFilter, sortKey]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -220,6 +229,7 @@ export default function AdminProducts() {
       stock_quantity: 10,
       category_id: "",
       source_url: "",
+      is_online: true,
     },
   });
 
@@ -236,6 +246,7 @@ export default function AdminProducts() {
       stock_quantity: 10,
       category_id: categories[0]?.id ?? "",
       source_url: "",
+      is_online: true,
     });
     setDialogOpen(true);
   };
@@ -251,6 +262,7 @@ export default function AdminProducts() {
       stock_quantity: p.stock_quantity,
       category_id: p.category_id,
       source_url: p.source_url ?? "",
+      is_online: p.is_online !== false,
     });
     setDialogOpen(true);
   };
@@ -296,6 +308,7 @@ export default function AdminProducts() {
             stock_quantity,
             category_id: values.category_id,
             source_url,
+            is_online: values.is_online,
             ...(imageFile ? { image_path } : {}),
           })
           .eq("id", editing.id);
@@ -314,6 +327,7 @@ export default function AdminProducts() {
           category_id: values.category_id,
           image_path,
           source_url,
+          is_online: values.is_online,
         });
         if (error) {
           throw new CustomException(error.message, error);
@@ -336,6 +350,27 @@ export default function AdminProducts() {
       if (!(e instanceof CustomException)) {
         console.error(e);
       }
+    },
+  });
+
+  const visibilityMutation = useMutation({
+    mutationFn: async ({ id, is_online }: { id: string; is_online: boolean }) => {
+      const supabase = getSupabase();
+      const { error } = await supabase.from("inventory_products").update({ is_online }).eq("id", id);
+      if (error) {
+        throw new CustomException(error.message, error);
+      }
+    },
+    onSuccess: (_data, { is_online }) => {
+      void queryClient.invalidateQueries({ queryKey: ["inventory_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_products"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_featured"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalog_product"] });
+      toast.success(is_online ? "Product is now online on the website" : "Product is now hidden from the website");
+    },
+    onError: (e) => {
+      const ex = toCustomException(e, "Could not update visibility");
+      toast.error(ex.message);
     },
   });
 
@@ -399,6 +434,19 @@ export default function AdminProducts() {
           />
         </div>
         <div className="flex flex-col gap-1.5 sm:w-48">
+          <Label className="text-xs">Visibility</Label>
+          <Select value={visibilityFilter} onValueChange={(v) => setVisibilityFilter(v as VisibilityFilter)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All products</SelectItem>
+              <SelectItem value="online">Online only</SelectItem>
+              <SelectItem value="offline">Offline only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1.5 sm:w-48">
           <Label className="text-xs">Category</Label>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger>
@@ -448,22 +496,24 @@ export default function AdminProducts() {
                 <TableHead>Category</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Stock status</TableHead>
+                <TableHead>Website</TableHead>
                 <TableHead className="w-28 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
+                  <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
                     No products match your filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredSorted.map((p) => {
                   const imgUrl = getPublicImageUrl(p.image_path);
+                  const online = p.is_online !== false;
                   return (
-                    <TableRow key={p.id}>
+                    <TableRow key={p.id} className={!online ? "opacity-70" : undefined}>
                       <TableCell>
                         <div className="bg-muted flex size-12 items-center justify-center overflow-hidden rounded-md border">
                           {imgUrl ? (
@@ -483,6 +533,21 @@ export default function AdminProducts() {
                       <TableCell className="text-right tabular-nums">{p.stock_quantity}</TableCell>
                       <TableCell>
                         <Badge variant={stockBadgeVariant(p.stock_quantity)}>{getStockStatus(p.stock_quantity)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={online}
+                            disabled={visibilityMutation.isPending}
+                            onCheckedChange={(checked) =>
+                              visibilityMutation.mutate({ id: p.id, is_online: checked })
+                            }
+                            aria-label={online ? "Set product offline" : "Set product online"}
+                          />
+                          <Badge variant={online ? "default" : "secondary"}>
+                            {online ? "Online" : "Offline"}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(p)} aria-label="Edit">
@@ -640,6 +705,23 @@ export default function AdminProducts() {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="is_online"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show on website</FormLabel>
+                      <FormDescription>
+                        Turn off to hide this product from shoppers. It stays in your inventory.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
                   </FormItem>
                 )}
               />

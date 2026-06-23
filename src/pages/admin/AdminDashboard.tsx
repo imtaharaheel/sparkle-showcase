@@ -56,6 +56,8 @@ export default function AdminDashboard() {
   }, [categories]);
 
   const total = products.length;
+  const onlineCount = products.filter((p) => p.is_online !== false).length;
+  const offlineCount = total - onlineCount;
   const lowStock = products.filter((p) => p.stock_quantity > 0 && p.stock_quantity < 5);
   const recentUploads = products.slice(0, RECENT_UPLOADS_LIMIT);
 
@@ -82,12 +84,12 @@ export default function AdminDashboard() {
         <Info className="h-4 w-4" />
         <AlertTitle>Your product list</AlertTitle>
         <AlertDescription className="text-muted-foreground">
-          Everything in Admin → Products is stored in your Supabase database. The public catalog reads from the same
-          place, so what you add or edit here is what shoppers see (after the page refreshes).
+          Everything in Admin → Products is stored in your Supabase database. Use the <strong>Online / Offline</strong>{" "}
+          switch to control what shoppers see on the public website.
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total products</CardDescription>
@@ -99,6 +101,27 @@ export default function AdminDashboard() {
             </Button>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Online on website</CardDescription>
+            <CardTitle className="text-3xl tabular-nums">{onlineCount}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-sm">Visible to shoppers.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Offline (hidden)</CardDescription>
+            <CardTitle className="text-3xl tabular-nums">{offlineCount}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-sm">In inventory only — not on the store.</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Low stock (1–4 units)</CardDescription>
@@ -124,6 +147,7 @@ export default function AdminDashboard() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Website</TableHead>
                   <TableHead className="text-right">Added</TableHead>
                 </TableRow>
               </TableHeader>
@@ -133,6 +157,11 @@ export default function AdminDashboard() {
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {categoryNameById.get(p.category_id) ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={p.is_online !== false ? "default" : "secondary"}>
+                        {p.is_online !== false ? "Online" : "Offline"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm tabular-nums">
                       {new Date(p.created_at).toLocaleString(undefined, {

@@ -138,7 +138,7 @@ async function loadDbStorefrontProducts(
   ...orders: { column: string; ascending: boolean }[]
 ): Promise<StorefrontProduct[]> {
   const supabase = getSupabase();
-  let query = supabase.from("inventory_products").select("*");
+  let query = supabase.from("inventory_products").select("*").eq("is_online", true);
   for (const o of orders) {
     query = query.order(o.column, { ascending: o.ascending });
   }
@@ -192,7 +192,12 @@ export async function fetchCatalogProductById(id: string): Promise<StorefrontPro
 
   let inv: InventoryProduct | null = null;
   if (isDatabaseUuid(id)) {
-    const { data, error } = await supabase.from("inventory_products").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await supabase
+      .from("inventory_products")
+      .select("*")
+      .eq("id", id)
+      .eq("is_online", true)
+      .maybeSingle();
     if (error) {
       throw new CustomException(error.message, error);
     }
@@ -203,6 +208,7 @@ export async function fetchCatalogProductById(id: string): Promise<StorefrontPro
       .from("inventory_products")
       .select("*")
       .eq("legacy_demo_id", id)
+      .eq("is_online", true)
       .maybeSingle();
     if (error) {
       throw new CustomException(error.message, error);
@@ -249,6 +255,7 @@ export async function fetchFeaturedCatalogProducts(limit = 8): Promise<Storefron
     .from("inventory_products")
     .select("*")
     .eq("is_featured", true)
+    .eq("is_online", true)
     .order("name");
   if (featError) {
     throw new CustomException(featError.message, featError);
@@ -263,6 +270,7 @@ export async function fetchFeaturedCatalogProducts(limit = 8): Promise<Storefron
   const { data: recentRows, error: recentError } = await supabase
     .from("inventory_products")
     .select("*")
+    .eq("is_online", true)
     .order("updated_at", { ascending: false })
     .limit(Math.max(limit * 2, 16));
   if (recentError) {
