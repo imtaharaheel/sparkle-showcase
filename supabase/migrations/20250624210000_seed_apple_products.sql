@@ -36,12 +36,12 @@ select
 
 Step up to Apple AirPods 4 with Active Noise Cancellation for a more immersive, focused listening experience. The H2 chip powers advanced ANC that reduces ambient noise on commutes and flights, while Transparency mode lets you stay aware of your surroundings when you need to. Adaptive Audio automatically blends ANC and Transparency, and Conversation Awareness lowers your media when you start speaking. The contoured open-ear fit, Personalized Spatial Audio, and USB-C charging case with up to 30 hours of total battery life make these the most capable open-form AirPods yet. IP54-rated durability and effortless Apple device pairing round out a premium everyday earbud. Shop genuine units at Saim Enterprise.
 
-Official product page: https://www.apple.com/airpods-4/',
+Official product page: https://www.apple.com/airpods-4/?variant=active-noise-cancellation',
   47500.00,
   10,
   (select id from public.categories where slug = 'apple-products' limit 1),
   '/products/apple/airpods-4-anc.png',
-  'https://www.apple.com/airpods-4/',
+  'https://www.apple.com/airpods-4/?variant=active-noise-cancellation',
   true,
   '[{"label":"Chip","value":"Apple H2"},{"label":"Noise control","value":"Active Noise Cancellation, Transparency, Adaptive Audio"},{"label":"Battery (earbuds)","value":"Up to 5 hours listening (up to 4 with ANC)"},{"label":"Battery (with case)","value":"Up to 30 hours total"},{"label":"Connectivity","value":"Bluetooth 5.3"},{"label":"Charging","value":"USB-C, wireless charging case"},{"label":"Water resistance","value":"IP54"}]'::jsonb,
   null,
@@ -84,12 +84,12 @@ select
 
 The iPad Air with M4 chip brings pro-level performance to Apple’s most portable Air design. The M4 delivers fast CPU and GPU performance for creative apps, multitasking, and Apple Intelligence features, while the stunning Liquid Retina display makes photos, video, and drawing look incredible. Available in 11-inch and 13-inch sizes with Wi-Fi connectivity, iPad Air supports Apple Pencil Pro and Magic Keyboard for serious productivity. An all-day battery, USB-C port, and Center Stage front camera make it perfect for students, professionals, and creators who want iPad flexibility without Pro pricing. Choose your screen size and storage below — all units are Wi-Fi only. Genuine stock at Saim Enterprise.
 
-Official product page: https://www.apple.com/ipad-air/',
+Official product page: https://www.apple.com/ipad-air/?chip=m4',
   199999.00,
   10,
   (select id from public.categories where slug = 'apple-products' limit 1),
   '/products/apple/ipad-air-m4.png',
-  'https://www.apple.com/ipad-air/',
+  'https://www.apple.com/ipad-air/?chip=m4',
   true,
   '[{"label":"Chip","value":"Apple M4"},{"label":"Display","value":"11-inch or 13-inch Liquid Retina"},{"label":"Connectivity","value":"Wi-Fi 6E (Wi-Fi models only)"},{"label":"Port","value":"USB-C"},{"label":"Apple Pencil","value":"Apple Pencil Pro support"},{"label":"Camera","value":"12MP Wide back, 12MP Center Stage front"}]'::jsonb,
   '{"dimensions":["size","storage"],"choices":{"size":["11-inch","13-inch"],"storage":["128GB","256GB","512GB","1TB"]},"options":[{"id":"m4-11-128","size":"11-inch","storage":"128GB","price":199999},{"id":"m4-11-256","size":"11-inch","storage":"256GB","price":234999},{"id":"m4-11-512","size":"11-inch","storage":"512GB","price":289999},{"id":"m4-11-1tb","size":"11-inch","storage":"1TB","price":349999},{"id":"m4-13-128","size":"13-inch","storage":"128GB","price":267999},{"id":"m4-13-256","size":"13-inch","storage":"256GB","price":294999},{"id":"m4-13-512","size":"13-inch","storage":"512GB","price":359999},{"id":"m4-13-1tb","size":"13-inch","storage":"1TB","price":419999}],"defaultOptionId":"m4-11-128"}'::jsonb,
@@ -108,12 +108,12 @@ select
 
 The iPad Air with M3 chip offers outstanding performance for everyday work, study, and entertainment at a compelling price point. The M3 handles demanding apps, gaming, and creative workflows with ease, paired with a beautiful Liquid Retina display in your choice of 11-inch or 13-inch size. Wi-Fi connectivity keeps things simple — no cellular contracts — while USB-C, all-day battery life, and support for Apple Pencil Pro make this one of the most versatile tablets you can buy. Select your preferred screen size and storage below. All models listed are Wi-Fi only and available through Saim Enterprise.
 
-Official product page: https://www.apple.com/ipad-air/',
+Official product page: https://www.apple.com/ipad-air/?chip=m3',
   185999.00,
   10,
   (select id from public.categories where slug = 'apple-products' limit 1),
   '/products/apple/ipad-air-m3.png',
-  'https://www.apple.com/ipad-air/',
+  'https://www.apple.com/ipad-air/?chip=m3',
   true,
   '[{"label":"Chip","value":"Apple M3"},{"label":"Display","value":"11-inch or 13-inch Liquid Retina"},{"label":"Connectivity","value":"Wi-Fi 6E (Wi-Fi models only)"},{"label":"Port","value":"USB-C"},{"label":"Apple Pencil","value":"Apple Pencil Pro support"}]'::jsonb,
   '{"dimensions":["size","storage"],"choices":{"size":["11-inch","13-inch"],"storage":["128GB","256GB","512GB","1TB"]},"options":[{"id":"m3-11-128","size":"11-inch","storage":"128GB","price":185999},{"id":"m3-11-256","size":"11-inch","storage":"256GB","price":218999},{"id":"m3-11-512","size":"11-inch","storage":"512GB","price":269999},{"id":"m3-11-1tb","size":"11-inch","storage":"1TB","price":329999},{"id":"m3-13-128","size":"13-inch","storage":"128GB","price":249999},{"id":"m3-13-256","size":"13-inch","storage":"256GB","price":279999},{"id":"m3-13-512","size":"13-inch","storage":"512GB","price":339999},{"id":"m3-13-1tb","size":"13-inch","storage":"1TB","price":389999}],"defaultOptionId":"m3-11-128"}'::jsonb,

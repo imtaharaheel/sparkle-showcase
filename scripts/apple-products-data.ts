@@ -45,7 +45,7 @@ export const APPLE_PRODUCTS: AppleProductSeed[] = [
     stockQuantity: 10,
     imageFile: "airpods-4-anc.png",
     imageUrl: "https://www.apple.com/v/airpods-4/g/images/meta/airpods-4__gnjh1t3yjxm6_og.png?202606221042",
-    sourceUrl: "https://www.apple.com/airpods-4/",
+    sourceUrl: "https://www.apple.com/airpods-4/?variant=active-noise-cancellation",
     specifications: [
       { label: "Chip", value: "Apple H2" },
       { label: "Noise control", value: "Active Noise Cancellation, Transparency, Adaptive Audio" },
@@ -85,7 +85,7 @@ export const APPLE_PRODUCTS: AppleProductSeed[] = [
     stockQuantity: 10,
     imageFile: "ipad-air-m4.png",
     imageUrl: "https://www.apple.com/v/ipad-air/ah/images/meta/ipad-air_overview__bc2fd15uec0y_og.png?202606221042",
-    sourceUrl: "https://www.apple.com/ipad-air/",
+    sourceUrl: "https://www.apple.com/ipad-air/?chip=m4",
     specifications: [
       { label: "Chip", value: "Apple M4" },
       { label: "Display", value: "11-inch or 13-inch Liquid Retina" },
@@ -122,7 +122,7 @@ export const APPLE_PRODUCTS: AppleProductSeed[] = [
     stockQuantity: 10,
     imageFile: "ipad-air-m3.png",
     imageUrl: "https://www.apple.com/v/ipad-air/ah/images/meta/ipad-air_overview__bc2fd15uec0y_og.png?202606221042",
-    sourceUrl: "https://www.apple.com/ipad-air/",
+    sourceUrl: "https://www.apple.com/ipad-air/?chip=m3",
     specifications: [
       { label: "Chip", value: "Apple M3" },
       { label: "Display", value: "11-inch or 13-inch Liquid Retina" },
