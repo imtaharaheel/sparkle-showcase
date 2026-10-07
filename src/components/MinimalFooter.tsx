@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
-import { Logo } from "./Logo";
 
 const WHATSAPP_NUMBER = "923342914563";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in your products.";
@@ -21,9 +20,6 @@ export const MinimalFooter = () => {
     <footer className="bg-[#050507] py-12">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-8">
-          {/* Logo */}
-          <Logo size="lg" />
-
           {/* WhatsApp CTA */}
           <motion.button
             onClick={handleWhatsApp}
