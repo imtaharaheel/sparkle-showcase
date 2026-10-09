@@ -188,7 +188,7 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
               </div>
             ) : null}
             <div
-              className="flex aspect-square cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl"
+              className="flex aspect-[4/5] cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl"
               onPointerMove={handlePointerMove}
               onPointerLeave={() => setHoverOrigin(null)}
               onClick={openLightbox}

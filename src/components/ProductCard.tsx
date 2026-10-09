@@ -45,7 +45,7 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
           )}
 
           {/* Image — flat white backdrop like Paklap for sharp product photos */}
-          <div className="relative aspect-square overflow-hidden bg-white">
+          <div className="relative aspect-[4/5] overflow-hidden bg-white">
             {product.image ? (
               <img
                 src={product.image}
