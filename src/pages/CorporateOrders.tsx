@@ -4,7 +4,6 @@ import { Building2, Package, Clock, Headphones, Shield, TrendingUp, User, Mail, 
 import { Navbar } from "@/components/Navbar";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -345,7 +344,6 @@ const CorporateOrders = () => {
 
       <MinimalFooter />
       <WhatsAppButton />
-      <StickyWhatsAppCTA />
     </div>
   );
 };

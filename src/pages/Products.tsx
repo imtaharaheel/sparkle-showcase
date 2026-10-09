@@ -7,7 +7,6 @@ import { Navbar } from "@/components/Navbar";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { ProductCard } from "@/components/ProductCard";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 import { QuickQuoteDrawer } from "@/components/QuickQuoteDrawer";
 import {
   fetchCatalogCategories,
@@ -379,7 +378,6 @@ const Products = () => {
 
       <MinimalFooter />
       <WhatsAppButton />
-      <StickyWhatsAppCTA />
       <QuickQuoteDrawer
         open={quoteDrawerOpen}
         onOpenChange={setQuoteDrawerOpen}

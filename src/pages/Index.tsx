@@ -4,7 +4,6 @@ import { QuickSections } from "@/components/QuickSections";
 import { TrustSection } from "@/components/TrustSection";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 
 const Index = () => {
   return (
@@ -17,7 +16,6 @@ const Index = () => {
       </main>
       <MinimalFooter />
       <WhatsAppButton />
-      <StickyWhatsAppCTA />
     </div>
   );
 };

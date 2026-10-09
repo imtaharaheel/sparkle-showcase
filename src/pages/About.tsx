@@ -4,7 +4,6 @@ import { Users, Award, Package, ShieldCheck, MapPin, Phone, Clock, Mail } from "
 import { Navbar } from "@/components/Navbar";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { StickyWhatsAppCTA } from "@/components/StickyWhatsAppCTA";
 import { Logo } from "@/components/Logo";
 
 const stats = [
@@ -355,7 +354,6 @@ const About = () => {
 
       <MinimalFooter />
       <WhatsAppButton />
-      <StickyWhatsAppCTA />
     </div>
   );
 };
