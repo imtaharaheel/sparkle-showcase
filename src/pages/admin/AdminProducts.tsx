@@ -160,6 +160,18 @@ function isStoragePath(path: string): boolean {
   return !/^https?:\/\//i.test(path) && !path.startsWith("/");
 }
 
+/** Raw option rows of a product with size/storage/colour options (each has its own price). */
+type RawVariantOption = { id: string; price: number; size?: string; storage?: string; color?: string };
+
+function variantOptionsOf(p: InventoryProduct | null): RawVariantOption[] {
+  const options = (p?.variants as { options?: RawVariantOption[] } | null | undefined)?.options;
+  return Array.isArray(options) ? options.filter((o) => o && typeof o.id === "string") : [];
+}
+
+function variantOptionLabel(o: RawVariantOption): string {
+  return [o.size, o.storage, o.color].filter(Boolean).join(" · ") || o.id;
+}
+
 function productImagePaths(p: InventoryProduct): string[] {
   if (p.gallery_image_paths && p.gallery_image_paths.length > 0) return p.gallery_image_paths;
   return p.image_path ? [p.image_path] : [];
@@ -181,6 +193,9 @@ export default function AdminProducts() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
   const [images, setImages] = useState<ProductImageItem[]>([]);
+  /** Price typed for each option id, for products that have options. */
+  const [variantPrices, setVariantPrices] = useState<Record<string, string>>({});
+  const editingVariantOptions = variantOptionsOf(editing);
 
   const resetImages = (next: ProductImageItem[]) => {
     for (const item of images) {
@@ -315,6 +330,7 @@ export default function AdminProducts() {
   const openEdit = (p: InventoryProduct) => {
     setEditing(p);
     resetImages(productImagePaths(p).map((path) => ({ key: path, kind: "saved", path })));
+    setVariantPrices(Object.fromEntries(variantOptionsOf(p).map((o) => [o.id, String(o.price)])));
     form.reset({
       name: p.name,
       description: p.description,
@@ -360,12 +376,25 @@ export default function AdminProducts() {
       const gallery_image_paths = paths.length > 1 ? paths : [];
       const source_url = values.source_url?.trim() || null;
       if (editing) {
+        // The website shows option prices, so save those and keep the base price at the lowest one.
+        let price = values.price;
+        let variantsUpdate: { variants?: unknown } = {};
+        const options = variantOptionsOf(editing);
+        if (options.length > 0) {
+          const priced = options.map((o) => ({ ...o, price: Number(variantPrices[o.id]) }));
+          if (priced.some((o) => !Number.isFinite(o.price) || o.price < 0)) {
+            throw new CustomException("Enter a valid price for every option.");
+          }
+          price = Math.min(...priced.map((o) => o.price));
+          variantsUpdate = { variants: { ...(editing.variants as object), options: priced } };
+        }
         const { error } = await supabase
           .from("inventory_products")
           .update({
             name: values.name,
             description: values.description,
-            price: values.price,
+            price,
+            ...variantsUpdate,
             stock_quantity,
             category_id: values.category_id,
             source_url,
@@ -712,7 +741,7 @@ export default function AdminProducts() {
                 control={form.control}
                 name="price"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className={editingVariantOptions.length > 0 ? "hidden" : undefined}>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" min={0} {...field} />
@@ -721,6 +750,29 @@ export default function AdminProducts() {
                   </FormItem>
                 )}
               />
+              {editingVariantOptions.length > 0 ? (
+                <div className="space-y-2 rounded-lg border p-3">
+                  <Label>Price per option</Label>
+                  <p className="text-muted-foreground text-xs">
+                    This product has options. The website shows the price of the option the shopper picks, and
+                    listings show the lowest one.
+                  </p>
+                  {editingVariantOptions.map((o) => (
+                    <div key={o.id} className="flex items-center gap-3">
+                      <span className="min-w-0 flex-1 truncate text-sm">{variantOptionLabel(o)}</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        className="w-36"
+                        aria-label={`Price for ${variantOptionLabel(o)}`}
+                        value={variantPrices[o.id] ?? ""}
+                        onChange={(e) => setVariantPrices((prev) => ({ ...prev, [o.id]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <FormField
                 control={form.control}
                 name="stock_preset"
