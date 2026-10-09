@@ -71,4 +71,10 @@ jobs:
         run: npx supabase link --project-ref "${SUPABASE_PROJECT_REF}" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
       - name: Push migrations
-        run: npx supabase db push
+        run: |
+          set -o pipefail
+          if ! npx supabase db push 2>&1 | tee push.log; then
+            # Surface the reason on the run summary page.
+            echo "::error title=supabase db push failed::$(tail -n 12 push.log | tr '\n' ' ' | cut -c1-900)"
+            exit 1
+          fi
