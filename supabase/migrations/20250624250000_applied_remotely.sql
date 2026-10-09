@@ -1,0 +1,2 @@
+-- Placeholder: this migration was applied to the live database from another machine and its SQL was never committed.
+-- The file exists only so the local migration history matches the remote one.
