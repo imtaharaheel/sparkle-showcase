@@ -1,8 +1,11 @@
-# Restores a paused Supabase project and configures auth redirect URLs.
-# Secrets: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF
-name: Restore Supabase
+# Keeps the Supabase project from pausing for inactivity (daily query), restores it if it is
+# already paused, and configures auth redirect URLs.
+# Secrets: SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+name: Supabase keep-alive / restore
 
 on:
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,6 +14,8 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
     steps:
       - name: Restore Supabase project if paused
         run: |
@@ -52,3 +57,17 @@ jobs:
               "uri_allow_list": "https://saimenterprise.com/admin/reset-password,http://localhost:8080/admin/reset-password"
             }'
           echo "Auth redirect URLs configured."
+
+      # Free-tier projects pause after a week without database activity; a real query counts.
+      - name: Keep-alive query
+        run: |
+          set -euo pipefail
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${VITE_SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${VITE_SUPABASE_ANON_KEY}" \
+            "${VITE_SUPABASE_URL}/rest/v1/categories?select=id&limit=1")
+          echo "Keep-alive query HTTP ${CODE}"
+          if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
+            echo "ERROR: keep-alive query failed."
+            exit 1
+          fi
