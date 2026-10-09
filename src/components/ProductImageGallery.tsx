@@ -10,7 +10,7 @@ interface ProductImageGalleryProps {
   badge?: string;
 }
 
-const THUMB_SIZE = "4.5rem";
+const THUMB_SIZE = "5.625rem";
 const THUMB_GAP = "0.5rem";
 /** How much the main image enlarges under the mouse cursor. */
 const HOVER_ZOOM = 1.8;
@@ -34,7 +34,7 @@ function ThumbnailButton({
       onClick={onSelect}
       className={cn(
         "shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition-colors",
-        "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]",
+        "h-20 w-16 sm:h-[5.625rem] sm:w-[4.5rem]",
         selected ? "border-primary ring-2 ring-inset ring-primary/30" : "border-border hover:border-primary/50",
       )}
       aria-label={`View image ${index + 1} of ${total}`}
