@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CategoryManageMenu } from "@/components/admin/CategoryManageMenu";
 import { categoryFamilyIds, categoryLabel, countProductsByCategory, sortCategories } from "@/lib/admin-categories";
+import { buildProductVariants, type ProductVariantOption } from "@/lib/product-variants";
 import { toast } from "sonner";
 
 const stockPresetSchema = z.enum(["out_of_stock", "low_stock", "in_stock"]);
@@ -160,16 +161,50 @@ function isStoragePath(path: string): boolean {
   return !/^https?:\/\//i.test(path) && !path.startsWith("/");
 }
 
-/** Raw option rows of a product with size/storage/colour options (each has its own price). */
-type RawVariantOption = { id: string; price: number; size?: string; storage?: string; color?: string };
+/** One editable option row (a size / colour / storage combination with its own price). */
+type OptionRow = { id: string; size: string; color: string; storage: string; price: string };
 
-function variantOptionsOf(p: InventoryProduct | null): RawVariantOption[] {
-  const options = (p?.variants as { options?: RawVariantOption[] } | null | undefined)?.options;
-  return Array.isArray(options) ? options.filter((o) => o && typeof o.id === "string") : [];
+function optionRowsOf(p: InventoryProduct | null): OptionRow[] {
+  const options = (p?.variants as { options?: ProductVariantOption[] } | null | undefined)?.options;
+  if (!Array.isArray(options)) return [];
+  return options
+    .filter((o) => o && typeof o.id === "string")
+    .map((o) => ({
+      id: o.id,
+      size: o.size ?? "",
+      color: o.color ?? "",
+      storage: o.storage ?? "",
+      price: String(o.price ?? ""),
+    }));
 }
 
-function variantOptionLabel(o: RawVariantOption): string {
-  return [o.size, o.storage, o.color].filter(Boolean).join(" · ") || o.id;
+/** Validates the option rows and turns them into stored options; throws a readable error. */
+function optionRowsToOptions(rows: OptionRow[]): ProductVariantOption[] {
+  const seen = new Set<string>();
+  return rows.map((row, index) => {
+    const size = row.size.trim();
+    const color = row.color.trim();
+    const storage = row.storage.trim();
+    const price = Number(row.price);
+    if (!size && !color && !storage) {
+      throw new CustomException(`Option ${index + 1}: fill in a size, colour or storage (or remove the row).`);
+    }
+    if (row.price.trim() === "" || !Number.isFinite(price) || price < 0) {
+      throw new CustomException(`Option ${index + 1}: enter a valid price.`);
+    }
+    const key = [size, color, storage].join("|").toLowerCase();
+    if (seen.has(key)) {
+      throw new CustomException(`Option ${index + 1} repeats another option with the same size, colour and storage.`);
+    }
+    seen.add(key);
+    return {
+      id: row.id,
+      ...(size ? { size } : {}),
+      ...(color ? { color } : {}),
+      ...(storage ? { storage } : {}),
+      price,
+    };
+  });
 }
 
 function productImagePaths(p: InventoryProduct): string[] {
@@ -193,9 +228,12 @@ export default function AdminProducts() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
   const [images, setImages] = useState<ProductImageItem[]>([]);
-  /** Price typed for each option id, for products that have options. */
-  const [variantPrices, setVariantPrices] = useState<Record<string, string>>({});
-  const editingVariantOptions = variantOptionsOf(editing);
+  /** Size / colour / storage options being edited; empty for a product with a single price. */
+  const [optionRows, setOptionRows] = useState<OptionRow[]>([]);
+
+  const updateOptionRow = (id: string, field: keyof Omit<OptionRow, "id">, value: string) => {
+    setOptionRows((prev) => prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
+  };
 
   const resetImages = (next: ProductImageItem[]) => {
     for (const item of images) {
@@ -314,6 +352,7 @@ export default function AdminProducts() {
   const openCreate = () => {
     setEditing(null);
     resetImages([]);
+    setOptionRows([]);
     form.reset({
       name: "",
       description: "",
@@ -330,7 +369,7 @@ export default function AdminProducts() {
   const openEdit = (p: InventoryProduct) => {
     setEditing(p);
     resetImages(productImagePaths(p).map((path) => ({ key: path, kind: "saved", path })));
-    setVariantPrices(Object.fromEntries(variantOptionsOf(p).map((o) => [o.id, String(o.price)])));
+    setOptionRows(optionRowsOf(p));
     form.reset({
       name: p.name,
       description: p.description,
@@ -375,26 +414,18 @@ export default function AdminProducts() {
       const image_path = paths[0] ?? null;
       const gallery_image_paths = paths.length > 1 ? paths : [];
       const source_url = values.source_url?.trim() || null;
+      // With options, the website shows option prices; keep the base price at the lowest one.
+      const options = optionRowsToOptions(optionRows);
+      const variants = buildProductVariants(options);
+      const price = variants ? Math.min(...options.map((o) => o.price)) : values.price;
       if (editing) {
-        // The website shows option prices, so save those and keep the base price at the lowest one.
-        let price = values.price;
-        let variantsUpdate: { variants?: unknown } = {};
-        const options = variantOptionsOf(editing);
-        if (options.length > 0) {
-          const priced = options.map((o) => ({ ...o, price: Number(variantPrices[o.id]) }));
-          if (priced.some((o) => !Number.isFinite(o.price) || o.price < 0)) {
-            throw new CustomException("Enter a valid price for every option.");
-          }
-          price = Math.min(...priced.map((o) => o.price));
-          variantsUpdate = { variants: { ...(editing.variants as object), options: priced } };
-        }
         const { error } = await supabase
           .from("inventory_products")
           .update({
             name: values.name,
             description: values.description,
             price,
-            ...variantsUpdate,
+            variants,
             stock_quantity,
             category_id: values.category_id,
             source_url,
@@ -417,7 +448,8 @@ export default function AdminProducts() {
         const { error } = await supabase.from("inventory_products").insert({
           name: values.name,
           description: values.description,
-          price: values.price,
+          price,
+          variants,
           stock_quantity,
           category_id: values.category_id,
           image_path,
@@ -741,7 +773,7 @@ export default function AdminProducts() {
                 control={form.control}
                 name="price"
                 render={({ field }) => (
-                  <FormItem className={editingVariantOptions.length > 0 ? "hidden" : undefined}>
+                  <FormItem className={optionRows.length > 0 ? "hidden" : undefined}>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" min={0} {...field} />
@@ -750,29 +782,79 @@ export default function AdminProducts() {
                   </FormItem>
                 )}
               />
-              {editingVariantOptions.length > 0 ? (
-                <div className="space-y-2 rounded-lg border p-3">
-                  <Label>Price per option</Label>
-                  <p className="text-muted-foreground text-xs">
-                    This product has options. The website shows the price of the option the shopper picks, and
-                    listings show the lowest one.
-                  </p>
-                  {editingVariantOptions.map((o) => (
-                    <div key={o.id} className="flex items-center gap-3">
-                      <span className="min-w-0 flex-1 truncate text-sm">{variantOptionLabel(o)}</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        className="w-36"
-                        aria-label={`Price for ${variantOptionLabel(o)}`}
-                        value={variantPrices[o.id] ?? ""}
-                        onChange={(e) => setVariantPrices((prev) => ({ ...prev, [o.id]: e.target.value }))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              <div className="space-y-2 rounded-lg border p-3">
+                <Label>Options (size, colour, storage)</Label>
+                <p className="text-muted-foreground text-xs">
+                  Add one row per version you sell, each with its own price. Shoppers pick from these on the
+                  product page, and only the combinations listed here can be chosen. Leave a box empty if it
+                  doesn&apos;t apply. With no rows, the product has the single price above.
+                </p>
+                {optionRows.length > 0 ? (
+                  <div className="text-muted-foreground grid grid-cols-[1fr_1fr_1fr_1fr_2rem] gap-2 text-xs">
+                    <span>Size</span>
+                    <span>Colour</span>
+                    <span>Storage</span>
+                    <span>Price</span>
+                    <span />
+                  </div>
+                ) : null}
+                {optionRows.map((row, index) => (
+                  <div key={row.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_2rem] items-center gap-2">
+                    <Input
+                      aria-label={`Option ${index + 1} size`}
+                      placeholder="11-inch"
+                      value={row.size}
+                      onChange={(e) => updateOptionRow(row.id, "size", e.target.value)}
+                    />
+                    <Input
+                      aria-label={`Option ${index + 1} colour`}
+                      placeholder="Purple"
+                      value={row.color}
+                      onChange={(e) => updateOptionRow(row.id, "color", e.target.value)}
+                    />
+                    <Input
+                      aria-label={`Option ${index + 1} storage`}
+                      placeholder="128GB"
+                      value={row.storage}
+                      onChange={(e) => updateOptionRow(row.id, "storage", e.target.value)}
+                    />
+                    <Input
+                      aria-label={`Option ${index + 1} price`}
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      placeholder="0"
+                      value={row.price}
+                      onChange={(e) => updateOptionRow(row.id, "price", e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive h-8 w-8"
+                      aria-label={`Remove option ${index + 1}`}
+                      onClick={() => setOptionRows((prev) => prev.filter((r) => r.id !== row.id))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() =>
+                    setOptionRows((prev) => [
+                      ...prev,
+                      { id: crypto.randomUUID(), size: "", color: "", storage: "", price: "" },
+                    ])
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                  Add option
+                </Button>
+              </div>
               <FormField
                 control={form.control}
                 name="stock_preset"
