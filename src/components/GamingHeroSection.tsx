@@ -1,4 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-gaming-pc.jpg";
@@ -21,6 +22,8 @@ export const GamingHeroSection = () => {
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  // Scroll-linked effects stutter on phones, so the hero stays still there.
+  const isMobile = useIsMobile();
 
   const handleWhatsApp = (message: string) => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
@@ -34,7 +37,7 @@ export const GamingHeroSection = () => {
       {/* Animated Background with Parallax */}
       <motion.div 
         className="absolute inset-0 z-0"
-        style={{ y }}
+        style={isMobile ? undefined : { y }}
       >
         <img 
           src={heroImage}
@@ -79,7 +82,7 @@ export const GamingHeroSection = () => {
       {/* Content */}
       <motion.div 
         className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 pt-20"
-        style={{ opacity }}
+        style={isMobile ? undefined : { opacity }}
       >
         <div className="container mx-auto text-center">
           {/* Animated Badge */}

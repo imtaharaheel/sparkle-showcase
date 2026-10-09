@@ -241,3 +241,19 @@
 .animation-delay-6000 {
   animation-delay: 6s;
 }
+
+/* Phones: large blurred glows and frosted-glass bars make scrolling stutter, so drop them there. */
+@media (max-width: 767px) {
+  .blur-3xl,
+  [class*=" blur-["],
+  [class^="blur-["] {
+    display: none !important;
+  }
+
+  [class*="backdrop-blur"],
+  .glass-light,
+  .glass-dark {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

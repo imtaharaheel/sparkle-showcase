@@ -28,10 +28,11 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true }}
+      // Stagger within a row only: a per-index delay left cards far down a long list blank for seconds.
+      transition={{ duration: 0.3, delay: (index % 4) * 0.05 }}
     >
       <Link to={`/product/${product.id}`}>
         <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-md">
