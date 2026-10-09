@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { MessageCircle, Phone } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export const Footer = () => {
   return (
@@ -8,6 +9,7 @@ export const Footer = () => {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
+            <Logo size="md" variant="light" />
             <p className="text-sm text-muted-foreground">
               Premium gaming peripherals for the ultimate gaming experience. Quality products at competitive prices.
             </p>

@@ -31,7 +31,7 @@ export const Navbar = ({ variant = "light" }: NavbarProps) => {
         <div className="flex h-16 items-center justify-between md:h-20">
           {/* Logo */}
           <Link to="/">
-            <Logo size="md" />
+            <Logo size="md" variant={isDark ? "dark" : "light"} />
           </Link>
 
           {/* Desktop Navigation */}

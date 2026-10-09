@@ -1,42 +1,33 @@
 import { motion } from "framer-motion";
-import logoImage from "@/assets/logo.png";
+import logoMark from "@/assets/logo.png";
+import logoDark from "@/assets/logo-dark.png";
+import logoLight from "@/assets/logo-light.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
+  /** Background the logo sits on: "dark" uses the white wordmark, "light" the black one. */
+  variant?: "dark" | "light";
 }
 
-export const Logo = ({ size = "md", showText = true }: LogoProps) => {
+export const Logo = ({ size = "md", showText = true, variant = "dark" }: LogoProps) => {
   const sizes = {
-    sm: { icon: "h-10 w-10", text: "text-lg", subtext: "text-[8px]" },
-    md: { icon: "h-12 w-12", text: "text-xl", subtext: "text-[10px]" },
-    lg: { icon: "h-16 w-16", text: "text-2xl", subtext: "text-xs" },
+    sm: { icon: "h-10 w-10", full: "h-9" },
+    md: { icon: "h-12 w-12", full: "h-10 md:h-12" },
+    lg: { icon: "h-16 w-16", full: "h-16 md:h-20" },
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <motion.div
-        className={`relative ${sizes[size].icon} flex items-center justify-center overflow-hidden rounded-lg`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <img 
-          src={logoImage} 
-          alt="SAIM Enterprise Logo" 
-          className="h-full w-full object-contain"
+    <motion.div className="flex items-center" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+      {showText ? (
+        <img
+          src={variant === "light" ? logoLight : logoDark}
+          alt="SAIM Enterprises"
+          className={`${sizes[size].full} w-auto object-contain`}
         />
-      </motion.div>
-      
-      {showText && (
-        <div className="flex flex-col leading-none">
-          <span className={`font-display ${sizes[size].text} font-bold tracking-tight`}>
-            <span className="gradient-brand-text">SAIM</span>
-          </span>
-          <span className={`${sizes[size].subtext} font-semibold uppercase tracking-[0.2em] text-gray-400`}>
-            Enterprise
-          </span>
-        </div>
+      ) : (
+        <img src={logoMark} alt="SAIM Enterprises" className={`${sizes[size].icon} object-contain`} />
       )}
-    </div>
+    </motion.div>
   );
 };
