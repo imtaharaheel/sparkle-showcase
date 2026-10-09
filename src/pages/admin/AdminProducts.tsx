@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Star, Trash2, X } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { CustomException, toCustomException } from "@/lib/errors";
 import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
@@ -150,6 +150,21 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^\w.-]+/g, "_");
 }
 
+/** A product photo in the edit form: already saved, or picked and waiting to upload. */
+type ProductImageItem =
+  | { key: string; kind: "saved"; path: string }
+  | { key: string; kind: "new"; file: File; previewUrl: string };
+
+/** True for files in the product-images bucket (not external URLs or bundled /public assets). */
+function isStoragePath(path: string): boolean {
+  return !/^https?:\/\//i.test(path) && !path.startsWith("/");
+}
+
+function productImagePaths(p: InventoryProduct): string[] {
+  if (p.gallery_image_paths && p.gallery_image_paths.length > 0) return p.gallery_image_paths;
+  return p.image_path ? [p.image_path] : [];
+}
+
 function stockBadgeVariant(q: number): "default" | "secondary" | "destructive" {
   if (q === 0) return "destructive";
   if (q < 5) return "secondary";
@@ -165,7 +180,34 @@ export default function AdminProducts() {
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [images, setImages] = useState<ProductImageItem[]>([]);
+
+  const resetImages = (next: ProductImageItem[]) => {
+    for (const item of images) {
+      if (item.kind === "new") URL.revokeObjectURL(item.previewUrl);
+    }
+    setImages(next);
+  };
+
+  const addImageFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const added: ProductImageItem[] = Array.from(files).map((file) => ({
+      key: crypto.randomUUID(),
+      kind: "new",
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setImages((prev) => [...prev, ...added]);
+  };
+
+  const removeImage = (item: ProductImageItem) => {
+    if (item.kind === "new") URL.revokeObjectURL(item.previewUrl);
+    setImages((prev) => prev.filter((i) => i.key !== item.key));
+  };
+
+  const makeMainImage = (item: ProductImageItem) => {
+    setImages((prev) => [item, ...prev.filter((i) => i.key !== item.key)]);
+  };
   const [deleteTarget, setDeleteTarget] = useState<InventoryProduct | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
@@ -258,7 +300,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setImageFile(null);
+    resetImages([]);
     form.reset({
       name: "",
       description: "",
@@ -274,7 +316,7 @@ export default function AdminProducts() {
 
   const openEdit = (p: InventoryProduct) => {
     setEditing(p);
-    setImageFile(null);
+    resetImages(productImagePaths(p).map((path) => ({ key: path, kind: "saved", path })));
     form.reset({
       name: p.name,
       description: p.description,
@@ -308,16 +350,16 @@ export default function AdminProducts() {
     mutationFn: async (values: ProductFormValues) => {
       const stock_quantity = normalizeStockQuantity(values.stock_preset, values.stock_quantity);
       const supabase = getSupabase();
-      let image_path = editing?.image_path ?? null;
-      if (imageFile && editing?.image_path && !/^https?:\/\//i.test(editing.image_path)) {
-        const { error: removeError } = await supabase.storage.from("product-images").remove([editing.image_path]);
-        if (removeError) {
-          throw new CustomException(removeError.message, removeError);
-        }
+      if (!editing && images.length === 0) {
+        throw new CustomException("Please choose at least one image for new products.");
       }
-      if (imageFile) {
-        image_path = await uploadImage(imageFile);
+      const paths: string[] = [];
+      for (const item of images) {
+        paths.push(item.kind === "saved" ? item.path : await uploadImage(item.file));
       }
+      // First photo is the main one; the gallery column lists every photo when there are several.
+      const image_path = paths[0] ?? null;
+      const gallery_image_paths = paths.length > 1 ? paths : [];
       const source_url = values.source_url?.trim() || null;
       if (editing) {
         const { error } = await supabase
@@ -330,16 +372,21 @@ export default function AdminProducts() {
             category_id: values.category_id,
             source_url,
             is_online: values.is_online,
-            ...(imageFile ? { image_path } : {}),
+            image_path,
+            gallery_image_paths,
           })
           .eq("id", editing.id);
         if (error) {
           throw new CustomException(error.message, error);
         }
-      } else {
-        if (!imageFile) {
-          throw new CustomException("Please choose an image for new products.");
+        const removed = productImagePaths(editing).filter((path) => isStoragePath(path) && !paths.includes(path));
+        if (removed.length > 0) {
+          const { error: removeError } = await supabase.storage.from("product-images").remove(removed);
+          if (removeError) {
+            console.error(removeError);
+          }
         }
+      } else {
         const { error } = await supabase.from("inventory_products").insert({
           name: values.name,
           description: values.description,
@@ -347,6 +394,7 @@ export default function AdminProducts() {
           stock_quantity,
           category_id: values.category_id,
           image_path,
+          gallery_image_paths,
           source_url,
           is_online: values.is_online,
         });
@@ -363,7 +411,7 @@ export default function AdminProducts() {
       toast.success(editing ? "Product updated" : "Product created");
       setDialogOpen(false);
       setEditing(null);
-      setImageFile(null);
+      resetImages([]);
     },
     onError: (e) => {
       const ex = toCustomException(e, "Save failed");
@@ -398,8 +446,9 @@ export default function AdminProducts() {
   const deleteMutation = useMutation({
     mutationFn: async (p: InventoryProduct) => {
       const supabase = getSupabase();
-      if (p.image_path && !/^https?:\/\//i.test(p.image_path)) {
-        const { error: storageError } = await supabase.storage.from("product-images").remove([p.image_path]);
+      const stored = productImagePaths(p).filter(isStoragePath);
+      if (stored.length > 0) {
+        const { error: storageError } = await supabase.storage.from("product-images").remove(stored);
         if (storageError) {
           throw new CustomException(storageError.message, storageError);
         }
@@ -795,16 +844,54 @@ export default function AdminProducts() {
                 )}
               />
               <div className="space-y-2">
-                <Label htmlFor="product-image">Image {editing ? "(optional)" : ""}</Label>
+                <Label htmlFor="product-image">Images</Label>
+                {images.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {images.map((item, index) => {
+                      const src = item.kind === "new" ? item.previewUrl : getPublicImageUrl(item.path);
+                      return (
+                        <div key={item.key} className="bg-muted relative aspect-square overflow-hidden rounded-md border">
+                          {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : null}
+                          {index === 0 ? (
+                            <Badge className="absolute bottom-1 left-1 px-1.5 py-0 text-[10px]">Main</Badge>
+                          ) : (
+                            <button
+                              type="button"
+                              title="Make main image"
+                              aria-label="Make main image"
+                              onClick={() => makeMainImage(item)}
+                              className="bg-background/90 hover:bg-background absolute bottom-1 left-1 rounded-full border p-1"
+                            >
+                              <Star className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            title="Remove image"
+                            aria-label="Remove image"
+                            onClick={() => removeImage(item)}
+                            className="bg-background/90 hover:bg-background absolute right-1 top-1 rounded-full border p-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <Input
                   id="product-image"
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  multiple
+                  onChange={(e) => {
+                    addImageFiles(e.target.files);
+                    e.target.value = "";
+                  }}
                 />
-                {editing?.image_path && !imageFile ? (
-                  <p className="text-muted-foreground text-xs">Current image kept unless you choose a new file.</p>
-                ) : null}
+                <p className="text-muted-foreground text-xs">
+                  You can pick several photos at once. The first one is the main image shown in listings.
+                </p>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -824,7 +911,7 @@ export default function AdminProducts() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete product?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes “{deleteTarget?.name}” and its image from storage. This cannot be undone.
+              This removes “{deleteTarget?.name}” and its images from storage. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

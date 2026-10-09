@@ -31,20 +31,6 @@ export const MinimalFooter = () => {
             Start a Conversation
           </motion.button>
 
-          {/* Social/Contact */}
-          <div className="flex items-center gap-6">
-            <motion.a
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-[#25D366] transition-colors hover:bg-[#25D366]/20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <WhatsAppIcon />
-            </motion.a>
-          </div>
-
           {/* Location */}
           <div className="flex items-center gap-2 text-gray-400">
             <MapPin className="h-4 w-4 text-primary" />
