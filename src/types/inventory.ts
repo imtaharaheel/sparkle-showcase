@@ -9,6 +9,8 @@ export interface InventoryCategory {
   sort_order?: number;
   /** Emoji shown next to the category name on the shop. */
   icon?: string;
+  /** Set on subcategories: id of the category this one sits under. */
+  parent_id?: string | null;
 }
 
 import type { ProductVariants } from "@/lib/product-variants";

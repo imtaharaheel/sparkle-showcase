@@ -12,6 +12,7 @@ import type { InventoryCategory } from "@/types/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -28,16 +29,25 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editing: InventoryCategory | null;
   categoryCount: number;
+  /** All categories, used to offer a parent for subcategories. */
+  categories: InventoryCategory[];
   onSaved: () => void;
 }
+
+const NO_PARENT = "none";
 
 export function CategoryFormDialog({
   open,
   onOpenChange,
   editing,
   categoryCount,
+  categories,
   onSaved,
 }: CategoryFormDialogProps) {
+  // One level only: a parent must be top-level, and a category with subcategories stays top-level.
+  const hasChildren = Boolean(editing && categories.some((c) => c.parent_id === editing.id));
+  const parentOptions = categories.filter((c) => !c.parent_id && c.id !== editing?.id);
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
@@ -45,6 +55,7 @@ export function CategoryFormDialog({
       icon: "📦",
       sort_order: 0,
       is_visible: true,
+      parent_id: "",
     },
   });
 
@@ -56,6 +67,7 @@ export function CategoryFormDialog({
         icon: editing.icon ?? "📦",
         sort_order: editing.sort_order ?? 0,
         is_visible: editing.is_visible !== false,
+        parent_id: editing.parent_id ?? "",
       });
       return;
     }
@@ -64,6 +76,7 @@ export function CategoryFormDialog({
       icon: "📦",
       sort_order: (categoryCount + 1) * 10,
       is_visible: true,
+      parent_id: "",
     });
   }, [open, editing, categoryCount, form]);
 
@@ -104,6 +117,40 @@ export function CategoryFormDialog({
                 </FormItem>
               )}
             />
+
+            {!hasChildren && parentOptions.length > 0 ? (
+              <FormField
+                control={form.control}
+                name="parent_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Parent category</FormLabel>
+                    <Select
+                      value={field.value || NO_PARENT}
+                      onValueChange={(v) => field.onChange(v === NO_PARENT ? "" : v)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={NO_PARENT}>None (top-level category)</SelectItem>
+                        {parentOptions.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground text-sm">
+                      Pick a parent to make this a subcategory, e.g. under Laptops.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <FormField
               control={form.control}

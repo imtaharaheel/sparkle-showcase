@@ -146,8 +146,8 @@ export function CategoryManageMenu({
                       }}
                     >
                       {isSelected ? <Check className="size-4 shrink-0" /> : <span className="size-4 shrink-0" />}
-                      <span className="truncate">
-                        {category.icon ? `${category.icon} ` : ""}
+                      <span className={cn("truncate", category.parent_id && "pl-4")}>
+                        {category.parent_id ? "↳ " : category.icon ? `${category.icon} ` : ""}
                         {category.name} ({count})
                       </span>
                       {category.is_visible === false ? (
@@ -196,6 +196,7 @@ export function CategoryManageMenu({
         onOpenChange={setDialogOpen}
         editing={editing}
         categoryCount={categories.length}
+        categories={categories}
         onSaved={invalidateCategories}
       />
 

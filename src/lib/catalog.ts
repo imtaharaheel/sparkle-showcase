@@ -19,6 +19,8 @@ export interface StorefrontCategory {
   id: string;
   name: string;
   icon: string;
+  /** Slug of the parent category when this is a subcategory. */
+  parentId?: string;
 }
 
 /** Shape shared by ProductCard, product detail, and quick quote. */
@@ -165,10 +167,12 @@ function mergeStorefrontCategories(dbRows: InventoryCategory[]): StorefrontCateg
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name));
 
   if (visibleRows.length > 0) {
+    const slugById = new Map(dbRows.map((row) => [row.id, row.slug]));
     return visibleRows.map((row) => ({
       id: row.slug,
       name: row.name,
       icon: row.icon?.trim() || iconForSlug(row.slug),
+      parentId: row.parent_id ? slugById.get(row.parent_id) : undefined,
     }));
   }
 

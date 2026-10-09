@@ -147,7 +147,7 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
                 {badge}
               </div>
             ) : null}
-            <div className="flex aspect-square items-center justify-center p-1.5 sm:p-2">
+            <div className="flex aspect-square items-center justify-center p-0.5">
               <img
                 src={selectedImage}
                 alt={alt}

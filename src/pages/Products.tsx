@@ -92,10 +92,19 @@ const Products = () => {
   const catalogOrder = new Map(productList.map((p, index) => [p.id, index]));
 
   const selectedCategory = searchParams.get("category") || "all";
+  const selectedCategoryInfo = categoryList.find((c) => c.id === selectedCategory);
+  const parentSlugByCategory = new Map(categoryList.map((c) => [c.id, c.parentId]));
+  const topLevelCategories = categoryList.filter((c) => !c.parentId);
+  // The top-level category in play, whether it or one of its subcategories is selected.
+  const activeParent = selectedCategoryInfo?.parentId ?? selectedCategory;
+  const activeParentInfo = categoryList.find((c) => c.id === activeParent);
+  const subcategories = categoryList.filter((c) => c.parentId === activeParent);
 
   let filteredProducts = productList;
   if (selectedCategory !== "all") {
-    filteredProducts = filteredProducts.filter((p) => p.category === selectedCategory);
+    filteredProducts = filteredProducts.filter(
+      (p) => p.category === selectedCategory || parentSlugByCategory.get(p.category) === selectedCategory,
+    );
   }
   if (searchQuery) {
     const query = searchQuery.toLowerCase();
@@ -132,21 +141,21 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navbar variant="dark" />
-      
+
       <main className="pt-20 md:pt-24">
         {/* Header */}
         <section ref={headerRef} className="relative border-b border-white/10 py-16 md:py-24 overflow-hidden">
           {/* Animated background gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-[#0a0a0f] to-[#0a0a0f]" />
-          <motion.div 
+          <motion.div
             className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
-            animate={{ 
+            animate={{
               scale: [1, 1.2, 1],
               opacity: [0.3, 0.5, 0.3],
             }}
             transition={{ duration: 8, repeat: Infinity }}
           />
-          
+
           <div className="container relative mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -163,9 +172,9 @@ const Products = () => {
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-primary">Premium Collection</span>
               </motion.div>
-              
+
               <h1 className="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-                {selectedCategory === "all" 
+                {selectedCategory === "all"
                   ? <>All <span className="gradient-brand-text">Products</span></>
                   : <span className="gradient-brand-text">{categoryList.find(c => c.id === selectedCategory)?.name || "Products"}</span>
                 }
@@ -213,8 +222,8 @@ const Products = () => {
                 <motion.button
                   onClick={() => handleCategoryChange("all")}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                    selectedCategory === "all" 
-                      ? "bg-primary text-white shadow-lg shadow-primary/25" 
+                    selectedCategory === "all"
+                      ? "bg-primary text-white shadow-lg shadow-primary/25"
                       : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
                   }`}
                   whileHover={{ scale: 1.05 }}
@@ -222,13 +231,13 @@ const Products = () => {
                 >
                   All
                 </motion.button>
-                {categoryList.map((category) => (
+                {topLevelCategories.map((category) => (
                   <motion.button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                      selectedCategory === category.id 
-                        ? "bg-primary text-white shadow-lg shadow-primary/25" 
+                      activeParent === category.id
+                        ? "bg-primary text-white shadow-lg shadow-primary/25"
                         : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
                     }`}
                     whileHover={{ scale: 1.05 }}
@@ -239,6 +248,28 @@ const Products = () => {
                 ))}
               </div>
             </div>
+
+            {/* Subcategories of the selected category */}
+            {subcategories.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {[{ id: activeParent, name: `All ${activeParentInfo?.name ?? ""}`.trim() }, ...subcategories].map(
+                  (sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => handleCategoryChange(sub.id)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                        selectedCategory === sub.id
+                          ? "bg-white text-black"
+                          : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      {sub.name}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
 
             {/* Active Filters */}
             {(selectedCategory !== "all" || searchQuery) && (
@@ -252,8 +283,8 @@ const Products = () => {
                 {selectedCategory !== "all" && (
                   <Badge variant="secondary" className="gap-1 bg-white/10 text-gray-300 border-white/20">
                     {categoryList.find(c => c.id === selectedCategory)?.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-white" 
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-white"
                       onClick={() => handleCategoryChange("all")}
                     />
                   </Badge>
@@ -261,8 +292,8 @@ const Products = () => {
                 {searchQuery && (
                   <Badge variant="secondary" className="gap-1 bg-white/10 text-gray-300 border-white/20">
                     "{searchQuery}"
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-white" 
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-white"
                       onClick={() => setSearchQuery("")}
                     />
                   </Badge>
@@ -295,7 +326,7 @@ const Products = () => {
               </div>
             ) : displayedProducts.length > 0 ? (
               <>
-                <motion.p 
+                <motion.p
                   className="mb-6 text-sm text-gray-500"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -304,9 +335,9 @@ const Products = () => {
                 </motion.p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {displayedProducts.map((product, index) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
+                    <ProductCard
+                      key={product.id}
+                      product={product}
                       index={index}
                       onQuickQuote={handleOpenQuote}
                     />
@@ -319,9 +350,9 @@ const Products = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="py-20 text-center"
               >
-                <motion.div 
+                <motion.div
                   className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/5 border border-white/10"
-                  animate={{ 
+                  animate={{
                     boxShadow: ["0 0 20px rgba(192, 38, 73, 0)", "0 0 30px rgba(192, 38, 73, 0.3)", "0 0 20px rgba(192, 38, 73, 0)"]
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -349,9 +380,9 @@ const Products = () => {
       <MinimalFooter />
       <WhatsAppButton />
       <StickyWhatsAppCTA />
-      <QuickQuoteDrawer 
-        open={quoteDrawerOpen} 
-        onOpenChange={setQuoteDrawerOpen} 
+      <QuickQuoteDrawer
+        open={quoteDrawerOpen}
+        onOpenChange={setQuoteDrawerOpen}
         product={selectedProduct}
       />
     </div>

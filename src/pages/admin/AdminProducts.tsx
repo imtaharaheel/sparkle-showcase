@@ -49,7 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CategoryManageMenu } from "@/components/admin/CategoryManageMenu";
-import { sortCategories } from "@/lib/admin-categories";
+import { categoryFamilyIds, categoryLabel, countProductsByCategory, sortCategories } from "@/lib/admin-categories";
 import { toast } from "sonner";
 
 const stockPresetSchema = z.enum(["out_of_stock", "low_stock", "in_stock"]);
@@ -223,7 +223,7 @@ export default function AdminProducts() {
   const categoryNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const c of categories) {
-      m.set(c.id, c.name);
+      m.set(c.id, categoryLabel(c, categories));
     }
     return m;
   }, [categories]);
@@ -233,13 +233,10 @@ export default function AdminProducts() {
     [categories],
   );
 
-  const productCountByCategory = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const p of products) {
-      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [products]);
+  const productCountByCategory = useMemo(
+    () => countProductsByCategory(products, categories),
+    [products, categories],
+  );
 
   const totalProductCount = products.length;
 
@@ -250,7 +247,8 @@ export default function AdminProducts() {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     if (categoryFilter !== "all") {
-      list = list.filter((p) => p.category_id === categoryFilter);
+      const family = categoryFamilyIds(categoryFilter, categories);
+      list = list.filter((p) => family.has(p.category_id));
     }
     if (visibilityFilter === "online") {
       list = list.filter((p) => p.is_online !== false);
@@ -280,7 +278,7 @@ export default function AdminProducts() {
         list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [products, search, categoryFilter, visibilityFilter, sortKey]);
+  }, [products, categories, search, categoryFilter, visibilityFilter, sortKey]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -568,7 +566,7 @@ export default function AdminProducts() {
                   className="focus-visible:ring-ring rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   <Badge variant={active ? "default" : "secondary"} className="tabular-nums">
-                    {c.name}: {count}
+                    {categoryLabel(c, categories)}: {count}
                   </Badge>
                 </button>
               );
@@ -801,7 +799,7 @@ export default function AdminProducts() {
                       <SelectContent>
                         {visibleCategories.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.name}
+                            {categoryLabel(c, categories)}
                           </SelectItem>
                         ))}
                       </SelectContent>

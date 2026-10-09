@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { CustomException, toCustomException } from "@/lib/errors";
-import { deleteInventoryCategory, sortCategories } from "@/lib/admin-categories";
+import { countProductsByCategory, deleteInventoryCategory, sortCategories } from "@/lib/admin-categories";
 import type { InventoryCategory, InventoryProduct } from "@/types/inventory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,13 +65,10 @@ export default function AdminCategories() {
     queryFn: fetchProducts,
   });
 
-  const productCountByCategory = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const p of products) {
-      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [products]);
+  const productCountByCategory = useMemo(
+    () => countProductsByCategory(products, categories),
+    [products, categories],
+  );
 
   const invalidateCategories = () => {
     void queryClient.invalidateQueries({ queryKey: ["inventory_categories"] });
@@ -144,7 +141,10 @@ export default function AdminCategories() {
                 <TableRow key={category.id}>
                   <TableCell className="tabular-nums">{category.sort_order ?? 0}</TableCell>
                   <TableCell className="text-lg">{category.icon ?? "📦"}</TableCell>
-                  <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {category.parent_id ? <span className="text-muted-foreground pl-4">↳ </span> : null}
+                    {category.name}
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-sm">{category.slug}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {productCountByCategory.get(category.id) ?? 0}
@@ -186,6 +186,7 @@ export default function AdminCategories() {
         onOpenChange={setDialogOpen}
         editing={editing}
         categoryCount={categories.length}
+        categories={categories}
         onSaved={invalidateCategories}
       />
 
