@@ -147,14 +147,14 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
                 {badge}
               </div>
             ) : null}
-            <div className="flex aspect-square items-center justify-center p-6 sm:p-10">
+            <div className="flex aspect-square items-center justify-center p-1.5 sm:p-2">
               <img
                 src={selectedImage}
                 alt={alt}
                 loading="eager"
                 decoding="async"
                 referrerPolicy="no-referrer"
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full rounded-xl object-contain"
               />
             </div>
           </div>
