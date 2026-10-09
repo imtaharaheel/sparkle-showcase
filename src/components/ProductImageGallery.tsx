@@ -188,7 +188,7 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
               </div>
             ) : null}
             <div
-              className="flex aspect-square cursor-zoom-in items-center justify-center overflow-hidden rounded-xl p-0.5"
+              className="flex aspect-square cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl"
               onPointerMove={handlePointerMove}
               onPointerLeave={() => setHoverOrigin(null)}
               onClick={openLightbox}
@@ -199,7 +199,7 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
                 loading="eager"
                 decoding="async"
                 referrerPolicy="no-referrer"
-                className="max-h-full max-w-full rounded-xl object-contain transition-transform duration-150 ease-out"
+                className="max-h-full max-w-full object-contain transition-transform duration-150 ease-out"
                 style={
                   hoverOrigin
                     ? { transform: `scale(${HOVER_ZOOM})`, transformOrigin: `${hoverOrigin.x}% ${hoverOrigin.y}%` }
