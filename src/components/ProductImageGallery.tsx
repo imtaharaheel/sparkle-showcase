@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -11,6 +12,8 @@ interface ProductImageGalleryProps {
 
 const THUMB_SIZE = "4.5rem";
 const THUMB_GAP = "0.5rem";
+/** How much the main image enlarges under the mouse cursor. */
+const HOVER_ZOOM = 1.8;
 
 function ThumbnailButton({
   src,
@@ -52,7 +55,44 @@ function ThumbnailButton({
 export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const thumbStripRef = useRef<HTMLDivElement>(null);
+  /** Cursor position over the main image as percentages, while hovering with a mouse. */
+  const [hoverOrigin, setHoverOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxZoomed, setLightboxZoomed] = useState(false);
   const selectedImage = images[selectedIndex] ?? images[0];
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoverOrigin({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
+  };
+
+  const lightboxScrollRef = useRef<HTMLDivElement>(null);
+
+  /** Toggle the enlarged view, keeping the clicked spot under the cursor when zooming in. */
+  const toggleLightboxZoom = (e: React.MouseEvent<HTMLImageElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const fx = (e.clientX - rect.left) / rect.width;
+    const fy = (e.clientY - rect.top) / rect.height;
+    const zoomingIn = !lightboxZoomed;
+    setLightboxZoomed(zoomingIn);
+    if (!zoomingIn) return;
+    requestAnimationFrame(() => {
+      const box = lightboxScrollRef.current;
+      if (!box) return;
+      box.scrollLeft = fx * box.scrollWidth - box.clientWidth / 2;
+      box.scrollTop = fy * box.scrollHeight - box.clientHeight / 2;
+    });
+  };
+
+  const openLightbox = () => {
+    setHoverOrigin(null);
+    setLightboxZoomed(false);
+    setLightboxOpen(true);
+  };
 
   if (!selectedImage) {
     return null;
@@ -147,19 +187,62 @@ export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryP
                 {badge}
               </div>
             ) : null}
-            <div className="flex aspect-square items-center justify-center p-0.5">
+            <div
+              className="flex aspect-square cursor-zoom-in items-center justify-center overflow-hidden rounded-xl p-0.5"
+              onPointerMove={handlePointerMove}
+              onPointerLeave={() => setHoverOrigin(null)}
+              onClick={openLightbox}
+            >
               <img
                 src={selectedImage}
                 alt={alt}
                 loading="eager"
                 decoding="async"
                 referrerPolicy="no-referrer"
-                className="max-h-full max-w-full rounded-xl object-contain"
+                className="max-h-full max-w-full rounded-xl object-contain transition-transform duration-150 ease-out"
+                style={
+                  hoverOrigin
+                    ? { transform: `scale(${HOVER_ZOOM})`, transformOrigin: `${hoverOrigin.x}% ${hoverOrigin.y}%` }
+                    : undefined
+                }
               />
             </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full shadow-md"
+              onClick={openLightbox}
+              aria-label="Zoom image"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="w-max max-w-[96vw] border-0 bg-black p-2 sm:rounded-xl [&>button]:rounded-full [&>button]:bg-white [&>button]:p-1.5 [&>button]:opacity-100">
+          <DialogTitle className="sr-only">{alt}</DialogTitle>
+          <div
+            ref={lightboxScrollRef}
+            className={cn("rounded-lg", lightboxZoomed ? "h-[92vh] w-[94vw] overflow-auto" : "overflow-hidden")}
+          >
+            <img
+              src={selectedImage}
+              alt={alt}
+              referrerPolicy="no-referrer"
+              onClick={toggleLightboxZoom}
+              className={cn(
+                "block",
+                lightboxZoomed
+                  ? "w-[180vmin] max-w-none cursor-zoom-out"
+                  : "max-h-[92vh] max-w-[92vw] cursor-zoom-in object-contain",
+              )}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
