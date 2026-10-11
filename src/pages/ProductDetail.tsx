@@ -63,11 +63,18 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
+  // Reset the picked option when a different product loads. Done during render, not in an effect:
+  // an effect here ran after the option picker reported its default and wiped it again.
+  const [optionsForProductId, setOptionsForProductId] = useState<string | undefined>(undefined);
+  if (product && product.id !== optionsForProductId) {
+    setOptionsForProductId(product.id);
+    setSelectedPrice(null);
+    setSelectedOption(null);
+  }
+
   useEffect(() => {
-    if (product) {
+    if (product?.id) {
       window.scrollTo(0, 0);
-      setSelectedPrice(null);
-      setSelectedOption(null);
     }
   }, [product?.id]);
 
@@ -204,6 +211,7 @@ const ProductDetail = () => {
 
                   {product.variants && product.variants.options.length > 0 ? (
                     <ProductVariantSelector
+                      key={product.id}
                       variants={product.variants}
                       onSelectionChange={handleVariantChange}
                     />
