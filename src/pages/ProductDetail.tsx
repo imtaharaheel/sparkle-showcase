@@ -17,6 +17,7 @@ import {
   fetchCatalogProducts,
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/formatPrice";
+import { getPublicImageUrl } from "@/types/inventory";
 import { toCustomException } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -177,6 +178,7 @@ const ProductDetail = () => {
                   images={product.images.length > 0 ? product.images : product.image ? [product.image] : []}
                   alt={product.name}
                   badge={product.badge}
+                  activeImage={selectedOption?.image ? getPublicImageUrl(selectedOption.image) : null}
                 />
               </div>
 

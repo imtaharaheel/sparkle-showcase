@@ -162,7 +162,15 @@ function isStoragePath(path: string): boolean {
 }
 
 /** One editable option row (a size / colour / storage combination with its own price). */
-type OptionRow = { id: string; size: string; color: string; storage: string; price: string };
+type OptionRow = {
+  id: string;
+  size: string;
+  color: string;
+  storage: string;
+  price: string;
+  /** Key of the photo (in the form's image list) shown when this option is picked; "" for none. */
+  imageKey: string;
+};
 
 function optionRowsOf(p: InventoryProduct | null): OptionRow[] {
   const options = (p?.variants as { options?: ProductVariantOption[] } | null | undefined)?.options;
@@ -175,11 +183,13 @@ function optionRowsOf(p: InventoryProduct | null): OptionRow[] {
       color: o.color ?? "",
       storage: o.storage ?? "",
       price: String(o.price ?? ""),
+      // Saved photos use their path as the key.
+      imageKey: o.image ?? "",
     }));
 }
 
 /** Validates the option rows and turns them into stored options; throws a readable error. */
-function optionRowsToOptions(rows: OptionRow[]): ProductVariantOption[] {
+function optionRowsToOptions(rows: OptionRow[], pathByImageKey: Map<string, string>): ProductVariantOption[] {
   const seen = new Set<string>();
   return rows.map((row, index) => {
     const size = row.size.trim();
@@ -203,6 +213,7 @@ function optionRowsToOptions(rows: OptionRow[]): ProductVariantOption[] {
       ...(color ? { color } : {}),
       ...(storage ? { storage } : {}),
       price,
+      ...(pathByImageKey.has(row.imageKey) ? { image: pathByImageKey.get(row.imageKey) } : {}),
     };
   });
 }
@@ -415,7 +426,7 @@ export default function AdminProducts() {
       const gallery_image_paths = paths.length > 1 ? paths : [];
       const source_url = values.source_url?.trim() || null;
       // With options, the website shows option prices; keep the base price at the lowest one.
-      const options = optionRowsToOptions(optionRows);
+      const options = optionRowsToOptions(optionRows, new Map(images.map((item, i) => [item.key, paths[i]])));
       const variants = buildProductVariants(options);
       const price = variants ? Math.min(...options.map((o) => o.price)) : values.price;
       if (editing) {
@@ -799,7 +810,8 @@ export default function AdminProducts() {
                   </div>
                 ) : null}
                 {optionRows.map((row, index) => (
-                  <div key={row.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_2rem] items-center gap-2">
+                  <div key={row.id} className="space-y-1.5">
+                  <div className="grid grid-cols-[1fr_1fr_1fr_1fr_2rem] items-center gap-2">
                     <Input
                       aria-label={`Option ${index + 1} size`}
                       placeholder="11-inch"
@@ -838,7 +850,35 @@ export default function AdminProducts() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
+                  {images.length > 1 ? (
+                    <div className="flex flex-wrap items-center gap-1.5 pb-1">
+                      <span className="text-muted-foreground text-xs">Photo for this option:</span>
+                      {images.map((item, photoIndex) => {
+                        const src = item.kind === "new" ? item.previewUrl : getPublicImageUrl(item.path);
+                        const selected = row.imageKey === item.key;
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            aria-label={`Use photo ${photoIndex + 1} for option ${index + 1}`}
+                            aria-pressed={selected}
+                            onClick={() => updateOptionRow(row.id, "imageKey", selected ? "" : item.key)}
+                            className={`h-9 w-9 overflow-hidden rounded border bg-white ${
+                              selected ? "ring-primary ring-2 ring-offset-1" : "opacity-70 hover:opacity-100"
+                            }`}
+                          >
+                            {src ? <img src={src} alt="" className="h-full w-full object-contain" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  </div>
                 ))}
+                <p className="text-muted-foreground text-xs">
+                  To change the picture when a shopper picks a colour, upload a photo of each colour under Images
+                  below, then click that photo on the matching option row.
+                </p>
                 <Button
                   type="button"
                   variant="outline"
@@ -847,7 +887,7 @@ export default function AdminProducts() {
                   onClick={() =>
                     setOptionRows((prev) => [
                       ...prev,
-                      { id: crypto.randomUUID(), size: "", color: "", storage: "", price: "" },
+                      { id: crypto.randomUUID(), size: "", color: "", storage: "", price: "", imageKey: "" },
                     ])
                   }
                 >

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ interface ProductImageGalleryProps {
   images: string[];
   alt: string;
   badge?: string;
+  /** When set to one of `images`, the gallery switches to it (e.g. the photo of the picked colour). */
+  activeImage?: string | null;
 }
 
 const THUMB_SIZE = "5.625rem";
@@ -52,8 +54,14 @@ function ThumbnailButton({
   );
 }
 
-export function ProductImageGallery({ images, alt, badge }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, alt, badge, activeImage }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    if (!activeImage) return;
+    const index = images.indexOf(activeImage);
+    if (index >= 0) setSelectedIndex(index);
+  }, [activeImage, images]);
   const thumbStripRef = useRef<HTMLDivElement>(null);
   /** Cursor position over the main image as percentages, while hovering with a mouse. */
   const [hoverOrigin, setHoverOrigin] = useState<{ x: number; y: number } | null>(null);

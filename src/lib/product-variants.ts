@@ -9,6 +9,8 @@ export interface ProductVariantOption {
   color?: string;
   storage?: string;
   price: number;
+  /** Path of the product photo to show when this option is picked (one of the product's own photos). */
+  image?: string;
 }
 
 export interface ProductVariants {
