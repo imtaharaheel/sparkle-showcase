@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, ZoomIn } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +10,12 @@ interface ProductImageGalleryProps {
   badge?: string;
   /** When set to one of `images`, the gallery switches to it (e.g. the photo of the picked colour). */
   activeImage?: string | null;
+  /** Product videos (YouTube links or .mp4 files), listed after the photos with a play icon. */
+  videos?: string[];
+}
+
+function youtubeId(url: string): string | undefined {
+  return url.match(/(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})/)?.[1];
 }
 
 const THUMB_SIZE = "5.625rem";
@@ -23,12 +29,14 @@ function ThumbnailButton({
   total,
   selected,
   onSelect,
+  isVideo,
 }: {
   src: string;
   index: number;
   total: number;
   selected: boolean;
   onSelect: () => void;
+  isVideo?: boolean;
 }) {
   return (
     <button
@@ -39,22 +47,29 @@ function ThumbnailButton({
         "h-20 w-16 sm:h-[5.625rem] sm:w-[4.5rem]",
         selected ? "border-primary ring-2 ring-inset ring-primary/30" : "border-border hover:border-primary/50",
       )}
-      aria-label={`View image ${index + 1} of ${total}`}
+      aria-label={isVideo ? "Play product video" : `View image ${index + 1} of ${total}`}
       aria-current={selected ? "true" : undefined}
     >
-      <img
-        src={src}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        referrerPolicy="no-referrer"
-        className="h-full w-full object-contain"
-      />
+      {isVideo ? (
+        <span className="flex h-full w-full flex-col items-center justify-center gap-1 rounded bg-neutral-900 text-white">
+          <Play className="h-5 w-5 fill-current" />
+          <span className="text-[10px] font-medium uppercase tracking-wide">Video</span>
+        </span>
+      ) : (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          className="h-full w-full object-contain"
+        />
+      )}
     </button>
   );
 }
 
-export function ProductImageGallery({ images, alt, badge, activeImage }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, alt, badge, activeImage, videos = [] }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
@@ -68,6 +83,9 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxZoomed, setLightboxZoomed] = useState(false);
   const selectedImage = images[selectedIndex] ?? images[0];
+  // Photos first, then videos; the same index runs over both.
+  const media = [...images.map((src) => ({ src, isVideo: false })), ...videos.map((src) => ({ src, isVideo: true }))];
+  const selectedVideo = selectedIndex >= images.length ? videos[selectedIndex - images.length] : undefined;
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "mouse") return;
@@ -106,28 +124,32 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
     return null;
   }
 
-  const showThumbs = images.length > 1;
+  const showThumbs = media.length > 1;
 
+  /** Arrows step to the previous / next picture and keep its thumbnail in view. */
   const scrollThumbs = (direction: "up" | "down") => {
+    const next = Math.min(media.length - 1, Math.max(0, selectedIndex + (direction === "up" ? -1 : 1)));
+    setSelectedIndex(next);
     const el = thumbStripRef.current;
     if (!el) return;
     const step = parseFloat(THUMB_SIZE) * 16 + parseFloat(THUMB_GAP) * 16;
-    el.scrollBy({ top: direction === "up" ? -step : step, behavior: "smooth" });
+    el.scrollTo({ top: Math.max(0, next * step - el.clientHeight / 2 + step / 2), behavior: "smooth" });
   };
 
-  const showThumbArrows = images.length > 4;
+  const showThumbArrows = media.length > 4;
 
   return (
     <div className="flex flex-col gap-3">
       {/* Mobile: horizontal scroll */}
       {showThumbs ? (
         <div className="flex gap-2 overflow-x-auto pb-1 sm:hidden [scrollbar-width:thin]">
-          {images.map((src, index) => (
+          {media.map(({ src, isVideo }, index) => (
             <ThumbnailButton
               key={`mobile-${src}-${index}`}
               src={src}
               index={index}
               total={images.length}
+                isVideo={isVideo}
               selected={index === selectedIndex}
               onSelect={() => setSelectedIndex(index)}
             />
@@ -149,7 +171,8 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
                 size="icon"
                 className="mb-1 size-7 shrink-0 rounded-md bg-background/90 shadow-sm"
                 onClick={() => scrollThumbs("up")}
-                aria-label="Scroll thumbnails up"
+                disabled={selectedIndex === 0}
+                aria-label="Previous picture"
               >
                 <ChevronUp className="size-4" />
               </Button>
@@ -160,12 +183,13 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
               className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-width:thin] [scrollbar-color:hsl(var(--border))_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
             >
               <div className="flex w-full flex-col gap-2">
-                {images.map((src, index) => (
+                {media.map(({ src, isVideo }, index) => (
                   <ThumbnailButton
                     key={`desktop-${src}-${index}`}
                     src={src}
                     index={index}
                     total={images.length}
+                    isVideo={isVideo}
                     selected={index === selectedIndex}
                     onSelect={() => setSelectedIndex(index)}
                   />
@@ -180,7 +204,8 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
                 size="icon"
                 className="mt-1 size-7 shrink-0 rounded-md bg-background/90 shadow-sm"
                 onClick={() => scrollThumbs("down")}
-                aria-label="Scroll thumbnails down"
+                disabled={selectedIndex >= media.length - 1}
+                aria-label="Next picture"
               >
                 <ChevronDown className="size-4" />
               </Button>
@@ -195,36 +220,54 @@ export function ProductImageGallery({ images, alt, badge, activeImage }: Product
                 {badge}
               </div>
             ) : null}
-            <div
-              className="flex aspect-[4/5] cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl"
-              onPointerMove={handlePointerMove}
-              onPointerLeave={() => setHoverOrigin(null)}
-              onClick={openLightbox}
-            >
-              <img
-                src={selectedImage}
-                alt={alt}
-                loading="eager"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                className="max-h-full max-w-full object-contain transition-transform duration-150 ease-out"
-                style={
-                  hoverOrigin
-                    ? { transform: `scale(${HOVER_ZOOM})`, transformOrigin: `${hoverOrigin.x}% ${hoverOrigin.y}%` }
-                    : undefined
-                }
-              />
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full shadow-md"
-              onClick={openLightbox}
-              aria-label="Zoom image"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
+            {selectedVideo ? (
+              <div className="flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-black">
+                {youtubeId(selectedVideo) ? (
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${youtubeId(selectedVideo)}`}
+                    title={`${alt} video`}
+                    className="aspect-video w-full"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video key={selectedVideo} src={selectedVideo} controls playsInline preload="metadata" className="max-h-full w-full" />
+                )}
+              </div>
+            ) : (
+              <>
+              <div
+                className="flex aspect-[4/5] cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl"
+                onPointerMove={handlePointerMove}
+                onPointerLeave={() => setHoverOrigin(null)}
+                onClick={openLightbox}
+              >
+                <img
+                  src={selectedImage}
+                  alt={alt}
+                  loading="eager"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="max-h-full max-w-full object-contain transition-transform duration-150 ease-out"
+                  style={
+                    hoverOrigin
+                      ? { transform: `scale(${HOVER_ZOOM})`, transformOrigin: `${hoverOrigin.x}% ${hoverOrigin.y}%` }
+                      : undefined
+                  }
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full shadow-md"
+                onClick={openLightbox}
+                aria-label="Zoom image"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

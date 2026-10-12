@@ -35,6 +35,14 @@ export interface InventoryProduct {
   source_url?: string | null;
   /** When false, product is hidden from the public website. */
   is_online?: boolean;
+  /** Brand name shown as a shop filter (e.g. "Meetion"). */
+  brand?: string | null;
+  /** Product videos: YouTube links or direct .mp4 URLs, shown on the product page. */
+  video_urls?: string[] | null;
+  /** Short selling points shown as a tick-list on the product page. */
+  features?: string[] | null;
+  /** Useful links for the product page, e.g. driver or RGB software downloads. */
+  resource_links?: { label: string; url: string }[] | null;
   /** Label/value rows for the product detail specs table. */
   specifications?: { label: string; value: string }[] | null;
   /** Size / storage options with per-option pricing. */

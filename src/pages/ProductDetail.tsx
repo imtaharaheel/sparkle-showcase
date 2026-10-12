@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, MessageCircle, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, Loader2, MessageCircle, Check, ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -186,6 +186,7 @@ const ProductDetail = () => {
                   alt={product.name}
                   badge={product.badge}
                   activeImage={selectedOption?.image ? getPublicImageUrl(selectedOption.image) : null}
+                  videos={product.videos}
                 />
               </div>
 
@@ -217,6 +218,19 @@ const ProductDetail = () => {
                     />
                   ) : null}
 
+                  {(() => {
+                    // Be upfront when the picked colour has no photo of its own.
+                    if (!selectedOption?.color || selectedOption.image) return null;
+                    const pictured = product.variants?.options.find((opt) => opt.image && opt.color);
+                    return (
+                      <p className="-mt-3 mb-6 text-sm text-muted-foreground">
+                        {pictured
+                          ? `Photo shows the ${pictured.color} version. Ask us on WhatsApp for pictures of ${selectedOption.color}.`
+                          : `Colours may differ from the photo. Ask us on WhatsApp for pictures of ${selectedOption.color}.`}
+                      </p>
+                    );
+                  })()}
+
                   <div className="mb-6">
                     {hasVariants && selectedPrice === null ? (
                       <span className="text-muted-foreground text-sm">From </span>
@@ -227,7 +241,9 @@ const ProductDetail = () => {
                   </div>
 
                   {product.description.trim() ? (
-                    <p className="mb-8 whitespace-pre-line text-lg text-muted-foreground">{product.description}</p>
+                    <p className="mb-8 whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+                      {product.description}
+                    </p>
                   ) : null}
 
                   <div className="mb-8 flex flex-wrap gap-4">
@@ -263,7 +279,7 @@ const ProductDetail = () => {
                   {product.features.length > 0 ? (
                     <div>
                       <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
-                        Features
+                        Key features
                       </h3>
                       <ul className="grid gap-3 sm:grid-cols-2">
                         {product.features.map((feature, index) => (
@@ -301,6 +317,25 @@ const ProductDetail = () => {
                 </h2>
                 <ProductSpecificationsTable specifications={product.specifications} />
               </motion.div>
+            ) : null}
+
+            {product.links && product.links.length > 0 ? (
+              <div className="mt-12">
+                <h2 className="mb-2 font-display text-2xl font-bold text-foreground md:text-3xl">Drivers &amp; software</h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Official downloads from the manufacturer for lighting, key and button settings. Links open on their website.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {product.links.map((link) => (
+                    <Button key={link.url} variant="outline" asChild className="gap-2">
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-4 w-4" />
+                        {link.label}
+                      </a>
+                    </Button>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
         </section>

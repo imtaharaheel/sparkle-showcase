@@ -85,8 +85,8 @@ export const ProductCard = ({ product, index = 0, onQuickQuote }: ProductCardPro
               <div className="mb-4" />
             )}
 
-            <div className="mt-auto flex items-center justify-between gap-3">
-              <span className="font-display text-xl font-bold text-primary">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <span className="font-display whitespace-nowrap text-xl font-bold text-primary">
                 {product.priceFrom ? "From " : ""}
                 {formatPrice(product.price)}
               </span>

@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useInView } from "framer-motion";
-import { Loader2, Search, X, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronDown, ChevronRight, Loader2, Search, SlidersHorizontal, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { MinimalFooter } from "@/components/MinimalFooter";
 import { ProductCard } from "@/components/ProductCard";
@@ -64,8 +64,8 @@ const Products = () => {
   const [sortKey, setSortKey] = useState<CatalogSortKey>("price_asc");
   const [quoteDrawerOpen, setQuoteDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StorefrontProduct | null>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const isHeaderInView = useInView(headerRef, { once: true });
+  /** Phones: the category / brand panel is collapsed until the shopper opens it. */
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const {
     data: products,
@@ -91,19 +91,39 @@ const Products = () => {
   const catalogOrder = new Map(productList.map((p, index) => [p.id, index]));
 
   const selectedCategory = searchParams.get("category") || "all";
+  const selectedBrand = searchParams.get("brand") || "all";
   const selectedCategoryInfo = categoryList.find((c) => c.id === selectedCategory);
   const parentSlugByCategory = new Map(categoryList.map((c) => [c.id, c.parentId]));
+  // Categories with nothing to show stay out of the shop until products are added to them.
+  const stockedCategories = new Set<string>();
+  for (const p of productList) {
+    stockedCategories.add(p.category);
+    const parent = parentSlugByCategory.get(p.category);
+    if (parent) stockedCategories.add(parent);
+  }
+  // Empty categories are listed too, dimmed and tagged "Soon", so shoppers can see what is coming.
   const topLevelCategories = categoryList.filter((c) => !c.parentId);
   // The top-level category in play, whether it or one of its subcategories is selected.
   const activeParent = selectedCategoryInfo?.parentId ?? selectedCategory;
   const activeParentInfo = categoryList.find((c) => c.id === activeParent);
-  const subcategories = categoryList.filter((c) => c.parentId === activeParent);
+  const subcategories = categoryList.filter((c) => c.parentId === activeParent && stockedCategories.has(c.id));
 
   let filteredProducts = productList;
   if (selectedCategory !== "all") {
     filteredProducts = filteredProducts.filter(
       (p) => p.category === selectedCategory || parentSlugByCategory.get(p.category) === selectedCategory,
     );
+  }
+  // Brands available within the chosen category, offered as a second filter.
+  const brandCounts = new Map<string, number>();
+  for (const p of filteredProducts) {
+    if (p.brand) brandCounts.set(p.brand, (brandCounts.get(p.brand) ?? 0) + 1);
+  }
+  if (selectedBrand !== "all" && !brandCounts.has(selectedBrand)) brandCounts.set(selectedBrand, 0);
+  const brandOptions = [...brandCounts.keys()].sort((a, b) => a.localeCompare(b));
+  const productsInCategory = filteredProducts.length;
+  if (selectedBrand !== "all") {
+    filteredProducts = filteredProducts.filter((p) => p.brand === selectedBrand);
   }
   if (searchQuery) {
     const query = searchQuery.toLowerCase();
@@ -117,6 +137,12 @@ const Products = () => {
 
   const displayedProducts = sortCatalogProducts(filteredProducts, sortKey, catalogOrder);
 
+  /** Products in a category, counting its subcategories too. */
+  const brandScoped = selectedBrand === "all" ? productList : productList.filter((p) => p.brand === selectedBrand);
+  const countIn = (categoryId: string) =>
+    brandScoped.filter((p) => p.category === categoryId || parentSlugByCategory.get(p.category) === categoryId).length;
+  const pageTitle = selectedCategoryInfo?.name ?? "All Products";
+
   const handleCategoryChange = (category: string) => {
     if (category === "all") {
       searchParams.delete("category");
@@ -126,9 +152,19 @@ const Products = () => {
     setSearchParams(searchParams);
   };
 
+  const handleBrandChange = (brand: string) => {
+    if (brand === "all") {
+      searchParams.delete("brand");
+    } else {
+      searchParams.set("brand", brand);
+    }
+    setSearchParams(searchParams);
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     searchParams.delete("category");
+    searchParams.delete("brand");
     setSearchParams(searchParams);
   };
 
@@ -142,68 +178,87 @@ const Products = () => {
       <Navbar variant="dark" />
 
       <main className="pt-20 md:pt-24">
-        {/* Header */}
-        <section ref={headerRef} className="relative border-b border-white/10 py-16 md:py-24 overflow-hidden">
-          {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-[#0a0a0f] to-[#0a0a0f]" />
-          <motion.div
-            className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{ duration: 8, repeat: Infinity }}
-          />
-
-          <div className="container relative mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <motion.div
-                className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ delay: 0.2 }}
+        {/* Header: where you are, in one line */}
+        <section className="border-b border-white/10 bg-gradient-to-b from-primary/10 to-[#0a0a0f] py-8 md:py-10">
+          <div className="container mx-auto px-4">
+            <nav className="mb-2 flex flex-wrap items-center gap-1 text-sm text-gray-400" aria-label="Breadcrumb">
+              <button type="button" className="hover:text-white" onClick={() => handleCategoryChange("all")}>
+                All products
+              </button>
+              {activeParentInfo ? (
+                <>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                  <button type="button" className="hover:text-white" onClick={() => handleCategoryChange(activeParentInfo.id)}>
+                    {activeParentInfo.name}
+                  </button>
+                </>
+              ) : null}
+              {selectedCategoryInfo?.parentId ? (
+                <>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                  <span className="text-gray-200">{selectedCategoryInfo.name}</span>
+                </>
+              ) : null}
+            </nav>
+            <h1 className="font-display text-3xl font-bold text-white md:text-4xl">
+              {selectedCategory === "all" ? (
+                <>
+                  All <span className="gradient-brand-text">Products</span>
+                </>
+              ) : (
+                <span className="gradient-brand-text">{pageTitle}</span>
+              )}
+            </h1>
+            {selectedBrand !== "all" ? (
+              <button
+                type="button"
+                onClick={() => handleBrandChange("all")}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-gray-200 hover:bg-white/15"
               >
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Premium Collection</span>
-              </motion.div>
-
-              <h1 className="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-                {selectedCategory === "all"
-                  ? <>All <span className="gradient-brand-text">Products</span></>
-                  : <span className="gradient-brand-text">{categoryList.find(c => c.id === selectedCategory)?.name || "Products"}</span>
-                }
-              </h1>
-              <p className="mx-auto max-w-2xl text-lg text-gray-400">
-                Browse our complete collection of premium gaming peripherals
-              </p>
-            </motion.div>
+                Brand: <span className="font-semibold text-white">{selectedBrand}</span>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
           </div>
         </section>
 
-        {/* Filters */}
+        {/* Search and sort */}
         <section className="sticky top-16 z-30 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-lg md:top-20">
-          <div className="container mx-auto space-y-4 px-4 py-4">
-            {/* Search — full width, easy to spot */}
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary/80" />
+          <div className="container mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
               <Input
-                type="search"
+                type="text"
                 placeholder="Search products by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-12 w-full rounded-xl border-white/20 bg-white/10 pl-12 text-base text-white shadow-sm placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/25 md:h-14 md:pl-14 md:text-lg"
+                className="h-11 border-white/10 bg-white/5 pl-11 pr-10 text-white placeholder:text-gray-500 focus:border-primary/50"
               />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
             </div>
-
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              {/* Sort */}
-              <Select value={sortKey} onValueChange={(v) => setSortKey(v as CatalogSortKey)}>
-                <SelectTrigger className="h-11 w-full bg-white/5 border-white/10 text-white sm:w-56">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 flex-1 gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white lg:hidden"
+                onClick={() => setFiltersOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Categories
+                <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+              </Button>
+              <Select value={sortKey} onValueChange={(value) => setSortKey(value as CatalogSortKey)}>
+                <SelectTrigger className="h-11 w-full border-white/10 bg-white/5 text-white sm:w-52">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -215,104 +270,132 @@ const Products = () => {
                   <SelectItem value="stock_desc">Stock (high → low)</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* Category Filters */}
-              <div className="flex flex-wrap items-center gap-2">
-                <motion.button
-                  onClick={() => handleCategoryChange("all")}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                    selectedCategory === "all"
-                      ? "bg-primary text-white shadow-lg shadow-primary/25"
-                      : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  All
-                </motion.button>
-                {topLevelCategories.map((category) => (
-                  <motion.button
-                    key={category.id}
-                    onClick={() => handleCategoryChange(category.id)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                      activeParent === category.id
-                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                        : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {category.icon} {category.name}
-                  </motion.button>
-                ))}
-              </div>
             </div>
-
-            {/* Subcategories of the selected category */}
-            {subcategories.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {[{ id: activeParent, name: `All ${activeParentInfo?.name ?? ""}`.trim() }, ...subcategories].map(
-                  (sub) => (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => handleCategoryChange(sub.id)}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                        selectedCategory === sub.id
-                          ? "bg-white text-black"
-                          : "bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10"
-                      }`}
-                    >
-                      {sub.name}
-                    </button>
-                  ),
-                )}
-              </div>
-            )}
-
-            {/* Active Filters */}
-            {(selectedCategory !== "all" || searchQuery) && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 flex items-center gap-2"
-              >
-                <span className="text-sm text-gray-500">Filters:</span>
-                {selectedCategory !== "all" && (
-                  <Badge variant="secondary" className="gap-1 bg-white/10 text-gray-300 border-white/20">
-                    {categoryList.find(c => c.id === selectedCategory)?.name}
-                    <X
-                      className="h-3 w-3 cursor-pointer hover:text-white"
-                      onClick={() => handleCategoryChange("all")}
-                    />
-                  </Badge>
-                )}
-                {searchQuery && (
-                  <Badge variant="secondary" className="gap-1 bg-white/10 text-gray-300 border-white/20">
-                    "{searchQuery}"
-                    <X
-                      className="h-3 w-3 cursor-pointer hover:text-white"
-                      onClick={() => setSearchQuery("")}
-                    />
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-gray-400 hover:text-white hover:bg-white/10"
-                >
-                  Clear all
-                </Button>
-              </motion.div>
-            )}
           </div>
         </section>
 
         {/* Products Grid */}
-        <section className="py-12 md:py-16 bg-[#08080c]">
-          <div className="container mx-auto px-4">
+        <section className="bg-[#08080c] py-8 md:py-10">
+          <div className="container mx-auto gap-8 px-4 lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+            {/* Category tree and brand list: a sidebar on desktop, a collapsible panel on phones */}
+            <aside className={`${filtersOpen ? "block" : "hidden"} mb-6 lg:mb-0 lg:block`}>
+              <div className="space-y-6 rounded-xl border border-white/10 bg-white/[0.03] p-4 lg:sticky lg:top-40">
+                <div>
+                  <h2 className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Categories</h2>
+                  <ul className="space-y-0.5">
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleCategoryChange("all");
+                          setFiltersOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm ${
+                          selectedCategory === "all" ? "bg-primary font-semibold text-white" : "text-gray-300 hover:bg-white/5"
+                        }`}
+                      >
+                        <span>All products</span>
+                        <span className="text-xs opacity-70">{brandScoped.length}</span>
+                      </button>
+                    </li>
+                    {topLevelCategories.map((category) => {
+                      const open = activeParent === category.id;
+                      const children = categoryList.filter((c) => c.parentId === category.id);
+                      const empty = !stockedCategories.has(category.id);
+                      return (
+                        <li key={category.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleCategoryChange(category.id);
+                              if (children.length === 0) setFiltersOpen(false);
+                            }}
+                            className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm ${
+                              selectedCategory === category.id
+                                ? "bg-primary font-semibold text-white"
+                                : open
+                                  ? "font-semibold text-white"
+                                  : empty
+                                    ? "text-gray-500 hover:bg-white/5"
+                                    : "text-gray-300 hover:bg-white/5"
+                            }`}
+                          >
+                            <span>
+                              {category.icon} {category.name}
+                            </span>
+                            <span className="flex items-center gap-1 text-xs opacity-70">
+                              {empty ? <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase">Soon</span> : countIn(category.id)}
+                              {children.length > 0 ? (
+                                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+                              ) : null}
+                            </span>
+                          </button>
+                          {open && children.length > 0 ? (
+                            <ul className="my-1 ml-4 space-y-0.5 border-l border-white/10 pl-2">
+                              {children.map((sub) => (
+                                <li key={sub.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleCategoryChange(sub.id);
+                                      setFiltersOpen(false);
+                                    }}
+                                    className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm ${
+                                      selectedCategory === sub.id
+                                        ? "bg-white font-semibold text-black"
+                                        : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                                    }`}
+                                  >
+                                    <span>{sub.name}</span>
+                                    <span className="text-xs opacity-70">
+                                      {stockedCategories.has(sub.id) ? countIn(sub.id) : "Soon"}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                {brandOptions.length > 0 || selectedBrand !== "all" ? (
+                  <div>
+                    <h2 className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Brand</h2>
+                    <ul className="space-y-0.5">
+                      {["all", ...brandOptions].map((brand) => (
+                        <li key={brand}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleBrandChange(brand);
+                              setFiltersOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                              selectedBrand === brand ? "font-semibold text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                            }`}
+                          >
+                            <span
+                              className={`h-3.5 w-3.5 rounded-full border ${
+                                selectedBrand === brand ? "border-primary bg-primary" : "border-white/30"
+                              }`}
+                            />
+                            <span className="flex-1">{brand === "all" ? "All brands" : brand}</span>
+                            <span className="text-xs opacity-70">
+                              {brand === "all" ? productsInCategory : (brandCounts.get(brand) ?? 0)}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </aside>
+
+            <div className="min-w-0">
             {catalogError ? (
               <div className="py-20 text-center">
                 <p className="text-destructive">{catalogError.message}</p>
@@ -332,7 +415,7 @@ const Products = () => {
                 >
                   Showing {displayedProducts.length} product{displayedProducts.length !== 1 ? 's' : ''}
                 </motion.p>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {displayedProducts.map((product, index) => (
                     <ProductCard
                       key={product.id}
@@ -358,9 +441,15 @@ const Products = () => {
                 >
                   <Search className="h-10 w-10 text-gray-500" />
                 </motion.div>
-                <h3 className="mb-2 font-display text-2xl font-semibold text-white">No products found</h3>
+                <h3 className="mb-2 font-display text-2xl font-semibold text-white">
+                  {selectedCategory !== "all" && !stockedCategories.has(selectedCategory) && !searchQuery
+                    ? "Coming soon"
+                    : "No products found"}
+                </h3>
                 <p className="mb-6 text-gray-400">
-                  Try adjusting your search or filter criteria
+                  {selectedCategory !== "all" && !stockedCategories.has(selectedCategory) && !searchQuery
+                    ? "We are adding products to this category. Message us on WhatsApp for availability."
+                    : "Try adjusting your search or filter criteria"}
                 </p>
                 <motion.button
                   onClick={clearFilters}
@@ -372,6 +461,7 @@ const Products = () => {
                 </motion.button>
               </motion.div>
             )}
+            </div>
           </div>
         </section>
       </main>

@@ -36,6 +36,12 @@ export interface StorefrontProduct {
   images: string[];
   /** Category slug for filters and links. */
   category: string;
+  /** Brand name, when set; used by the shop's brand filter. */
+  brand?: string;
+  /** Video URLs (YouTube or .mp4) for the product page. */
+  videos?: string[];
+  /** Driver / software / manual links for the product page. */
+  links?: { label: string; url: string }[];
   badge?: string;
   features: string[];
   webLink?: string;
@@ -128,7 +134,10 @@ function inventoryToStorefront(
     image: images[0] ?? "",
     images,
     category: cat?.slug ?? "accessory",
-    features: [],
+    brand: p.brand?.trim() || undefined,
+    videos: (p.video_urls ?? []).filter(Boolean),
+    links: (p.resource_links ?? []).filter((l) => l?.label && /^https?:\/\//i.test(l?.url ?? "")),
+    features: (p.features ?? []).filter(Boolean),
     webLink: parsed.webLink,
     featured: Boolean(p.is_featured),
     badge: p.stock_quantity === 0 ? "Out of Stock" : listingBadge || undefined,

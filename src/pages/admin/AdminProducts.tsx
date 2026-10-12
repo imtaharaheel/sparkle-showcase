@@ -82,6 +82,7 @@ function normalizeStockQuantity(preset: StockPreset, qty: number): number {
 const productFormSchema = z
   .object({
     name: z.string().min(1, "Name is required"),
+    brand: z.string().trim().max(60),
     description: z.string(),
     price: z.coerce.number().min(0, "Price must be 0 or more"),
     stock_preset: stockPresetSchema,
@@ -188,6 +189,30 @@ function optionRowsOf(p: InventoryProduct | null): OptionRow[] {
     }));
 }
 
+/** A "Drivers & software" style link being edited in the form. */
+type LinkRow = { id: string; label: string; url: string };
+
+/** One entry per non-empty line. */
+function linesOf(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** "Label: value" lines into specification rows; throws a readable error for a line without a colon. */
+function specsFromText(text: string): { label: string; value: string }[] {
+  return linesOf(text).map((line, index) => {
+    const at = line.indexOf(":");
+    const label = at > 0 ? line.slice(0, at).trim() : "";
+    const value = at > 0 ? line.slice(at + 1).trim() : "";
+    if (!label || !value) {
+      throw new CustomException(`Specifications, line ${index + 1}: write it as "Label: value" (for example "Weight: 1.2 kg").`);
+    }
+    return { label, value };
+  });
+}
+
 /** Validates the option rows and turns them into stored options; throws a readable error. */
 function optionRowsToOptions(rows: OptionRow[], pathByImageKey: Map<string, string>): ProductVariantOption[] {
   const seen = new Set<string>();
@@ -235,12 +260,27 @@ export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
+  /** "all", a brand name, or "none" for products with no brand set. */
+  const [brandFilter, setBrandFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryProduct | null>(null);
   const [images, setImages] = useState<ProductImageItem[]>([]);
   /** Size / colour / storage options being edited; empty for a product with a single price. */
   const [optionRows, setOptionRows] = useState<OptionRow[]>([]);
+
+  // Extra product-page details, edited as plain text (one entry per line) or simple rows.
+  const [featuresText, setFeaturesText] = useState("");
+  const [specsText, setSpecsText] = useState("");
+  const [videosText, setVideosText] = useState("");
+  const [linkRows, setLinkRows] = useState<LinkRow[]>([]);
+
+  const loadDetails = (p: InventoryProduct | null) => {
+    setFeaturesText((p?.features ?? []).join("\n"));
+    setSpecsText((p?.specifications ?? []).map((row) => `${row.label}: ${row.value}`).join("\n"));
+    setVideosText((p?.video_urls ?? []).join("\n"));
+    setLinkRows((p?.resource_links ?? []).map((l) => ({ id: crypto.randomUUID(), label: l.label, url: l.url })));
+  };
 
   const updateOptionRow = (id: string, field: keyof Omit<OptionRow, "id">, value: string) => {
     setOptionRows((prev) => prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
@@ -304,6 +344,11 @@ export default function AdminProducts() {
 
   const totalProductCount = products.length;
 
+  const brandNames = useMemo(
+    () => [...new Set(products.map((p) => p.brand?.trim()).filter((b): b is string => Boolean(b)))].sort(),
+    [products],
+  );
+
   const filteredSorted = useMemo(() => {
     let list = [...products];
     const q = search.trim().toLowerCase();
@@ -313,6 +358,11 @@ export default function AdminProducts() {
     if (categoryFilter !== "all") {
       const family = categoryFamilyIds(categoryFilter, categories);
       list = list.filter((p) => family.has(p.category_id));
+    }
+    if (brandFilter === "none") {
+      list = list.filter((p) => !p.brand?.trim());
+    } else if (brandFilter !== "all") {
+      list = list.filter((p) => p.brand?.trim() === brandFilter);
     }
     if (visibilityFilter === "online") {
       list = list.filter((p) => p.is_online !== false);
@@ -342,12 +392,26 @@ export default function AdminProducts() {
         list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [products, categories, search, categoryFilter, visibilityFilter, sortKey]);
+  }, [products, categories, search, categoryFilter, brandFilter, visibilityFilter, sortKey]);
+
+  /** Stock tally for whatever the filters currently show (e.g. one brand). */
+  const tally = useMemo(() => {
+    let units = 0;
+    let value = 0;
+    let outOfStock = 0;
+    for (const p of filteredSorted) {
+      units += p.stock_quantity;
+      value += p.stock_quantity * Number(p.price);
+      if (p.stock_quantity === 0) outOfStock += 1;
+    }
+    return { units, value, outOfStock };
+  }, [filteredSorted]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
+      brand: "",
       description: "",
       price: 0,
       stock_preset: "in_stock",
@@ -364,8 +428,10 @@ export default function AdminProducts() {
     setEditing(null);
     resetImages([]);
     setOptionRows([]);
+    loadDetails(null);
     form.reset({
       name: "",
+      brand: "",
       description: "",
       price: 0,
       stock_preset: "in_stock",
@@ -381,8 +447,10 @@ export default function AdminProducts() {
     setEditing(p);
     resetImages(productImagePaths(p).map((path) => ({ key: path, kind: "saved", path })));
     setOptionRows(optionRowsOf(p));
+    loadDetails(p);
     form.reset({
       name: p.name,
+      brand: p.brand ?? "",
       description: p.description,
       price: Number(p.price),
       stock_preset: quantityToPreset(p.stock_quantity),
@@ -429,14 +497,34 @@ export default function AdminProducts() {
       const options = optionRowsToOptions(optionRows, new Map(images.map((item, i) => [item.key, paths[i]])));
       const variants = buildProductVariants(options);
       const price = variants ? Math.min(...options.map((o) => o.price)) : values.price;
+      const videoUrls = linesOf(videosText);
+      const badVideo = videoUrls.find((url) => !/^https?:\/\/\S+$/i.test(url));
+      if (badVideo) {
+        throw new CustomException(`Videos: "${badVideo}" is not a web link. Paste the full link, starting with https://`);
+      }
+      const links = linkRows
+        .map((row) => ({ label: row.label.trim(), url: row.url.trim() }))
+        .filter((row) => row.label || row.url);
+      const badLink = links.find((row) => !row.label || !/^https?:\/\/\S+$/i.test(row.url));
+      if (badLink) {
+        throw new CustomException("Links: each one needs a name and a full web address starting with https://");
+      }
+      const details = {
+        features: linesOf(featuresText),
+        specifications: specsFromText(specsText),
+        video_urls: videoUrls,
+        resource_links: links,
+      };
       if (editing) {
         const { error } = await supabase
           .from("inventory_products")
           .update({
             name: values.name,
+            brand: values.brand || null,
             description: values.description,
             price,
             variants,
+            ...details,
             stock_quantity,
             category_id: values.category_id,
             source_url,
@@ -458,9 +546,11 @@ export default function AdminProducts() {
       } else {
         const { error } = await supabase.from("inventory_products").insert({
           name: values.name,
+          brand: values.brand || null,
           description: values.description,
           price,
           variants,
+          ...details,
           stock_quantity,
           category_id: values.category_id,
           image_path,
@@ -590,6 +680,23 @@ export default function AdminProducts() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex flex-col gap-1.5 sm:w-44">
+          <Label className="text-xs">Brand</Label>
+          <Select value={brandFilter} onValueChange={setBrandFilter}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All brands</SelectItem>
+              {brandNames.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {b}
+                </SelectItem>
+              ))}
+              <SelectItem value="none">No brand set</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <CategoryManageMenu
           value={categoryFilter}
           onValueChange={setCategoryFilter}
@@ -627,7 +734,10 @@ export default function AdminProducts() {
             </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
-            {visibleCategories.map((c) => {
+            {/* Top-level only: with subcategories this row gets too long; use the Category menu for those. */}
+            {visibleCategories
+              .filter((c) => !c.parent_id)
+              .map((c) => {
               const count = productCountByCategory.get(c.id) ?? 0;
               const active = categoryFilter === c.id;
               return (
@@ -655,6 +765,11 @@ export default function AdminProducts() {
             {categoryFilter !== "all" && categoryNameById.get(categoryFilter)
               ? ` in ${categoryNameById.get(categoryFilter)}`
               : ""}
+            {brandFilter !== "all" ? ` · brand: ${brandFilter === "none" ? "none set" : brandFilter}` : ""}
+            <span className="text-foreground mt-1 block font-medium">
+              {tally.units.toLocaleString()} units in stock · stock value Rs. {Math.round(tally.value).toLocaleString()}
+              {tally.outOfStock > 0 ? ` · ${tally.outOfStock} out of stock` : ""}
+            </span>
           </p>
         )}
         {isLoading ? (
@@ -695,7 +810,10 @@ export default function AdminProducts() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {p.name}
+                        {p.brand ? <span className="text-muted-foreground block text-xs font-normal">{p.brand}</span> : null}
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {categoryNameById.get(p.category_id) ?? "—"}
                       </TableCell>
@@ -763,6 +881,27 @@ export default function AdminProducts() {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand (optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} list="product-brands" placeholder="e.g. Meetion" />
+                    </FormControl>
+                    <datalist id="product-brands">
+                      {brandNames.map((b) => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
+                    <p className="text-muted-foreground text-xs">
+                      Shoppers can filter by brand. Pick an existing one or type a new name.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -895,6 +1034,93 @@ export default function AdminProducts() {
                   Add option
                 </Button>
               </div>
+              <details className="rounded-lg border p-3">
+                <summary className="cursor-pointer text-sm font-medium">
+                  More product page details (features, specifications, videos, links)
+                </summary>
+                <div className="mt-3 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="product-features">Key features</Label>
+                    <Textarea
+                      id="product-features"
+                      rows={4}
+                      value={featuresText}
+                      onChange={(e) => setFeaturesText(e.target.value)}
+                      placeholder={"Hot-swappable switches\nRGB backlight\n4000mAh battery"}
+                    />
+                    <p className="text-muted-foreground text-xs">One per line. Shown as a tick-list on the product page.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="product-specs">Technical specifications</Label>
+                    <Textarea
+                      id="product-specs"
+                      rows={6}
+                      value={specsText}
+                      onChange={(e) => setSpecsText(e.target.value)}
+                      placeholder={"Model: MK14\nWeight: 1.2 kg\nBattery: 4000mAh"}
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      One per line, written as Label: value. Shown as a table on the product page.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="product-videos">Videos</Label>
+                    <Textarea
+                      id="product-videos"
+                      rows={2}
+                      value={videosText}
+                      onChange={(e) => setVideosText(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      One link per line: a YouTube link or a direct .mp4 link. They appear in the photo gallery.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Links (drivers, software, manuals)</Label>
+                    {linkRows.map((row, index) => (
+                      <div key={row.id} className="grid grid-cols-[1fr_1.6fr_2rem] items-center gap-2">
+                        <Input
+                          aria-label={`Link ${index + 1} name`}
+                          placeholder="Driver software"
+                          value={row.label}
+                          onChange={(e) =>
+                            setLinkRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, label: e.target.value } : r)))
+                          }
+                        />
+                        <Input
+                          aria-label={`Link ${index + 1} web address`}
+                          placeholder="https://..."
+                          value={row.url}
+                          onChange={(e) =>
+                            setLinkRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, url: e.target.value } : r)))
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive h-8 w-8"
+                          aria-label={`Remove link ${index + 1}`}
+                          onClick={() => setLinkRows((prev) => prev.filter((r) => r.id !== row.id))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => setLinkRows((prev) => [...prev, { id: crypto.randomUUID(), label: "", url: "" }])}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add link
+                    </Button>
+                  </div>
+                </div>
+              </details>
               <FormField
                 control={form.control}
                 name="stock_preset"
