@@ -75,6 +75,7 @@ jobs:
           set -o pipefail
           if ! npx supabase db push 2>&1 | tee push.log; then
             # Surface the reason on the run summary page.
-            echo "::error title=supabase db push failed::$(tail -n 12 push.log | tr '\n' ' ' | cut -c1-900)"
+            # The ERROR line first: the failing statement printed after it can be many lines long.
+            echo "::error title=supabase db push failed::$( (grep -m 3 -iE 'error|sqlstate' push.log; tail -n 12 push.log) | tr -s ' ' | tr '\n' ' ' | cut -c1-900)"
             exit 1
           fi
