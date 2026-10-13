@@ -177,10 +177,10 @@ const ProductDetail = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="grid gap-12 lg:grid-cols-2"
+              className="grid grid-cols-1 gap-12 lg:grid-cols-2"
             >
               {/* Product Image Gallery */}
-              <div className="relative lg:sticky lg:top-28 lg:self-start">
+              <div className="relative min-w-0 lg:sticky lg:top-28 lg:self-start">
                 <ProductImageGallery
                   images={product.images.length > 0 ? product.images : product.image ? [product.image] : []}
                   alt={product.name}
@@ -191,7 +191,7 @@ const ProductDetail = () => {
               </div>
 
               {/* Product Info */}
-              <div>
+              <div className="min-w-0">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
